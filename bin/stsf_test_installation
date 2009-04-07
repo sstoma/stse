@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Testing for required binaries"
+which rbox > /dev/null && echo " OK - QHULL " || echo "ERROR - QHULL binaries not found.."
+which MakeConvexModel > /dev/null && echo " OK - PyXL " || echo "ERROR - PyXL binaries not found.."
+echo "Testing for required python packages"
+echo " TODO"

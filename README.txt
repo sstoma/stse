@@ -1,0 +1,1 @@
+The contrib/pyxl-light-0.5.1 should be accessible via the PATH and PYTHONPATH

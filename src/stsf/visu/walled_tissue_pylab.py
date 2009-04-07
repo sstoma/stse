@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+"""Functions containing walled_tissue pylab visualisation.
+
+
+:todo:
+    Nothing.
+
+:bug:
+    None known.
+    
+:organization:
+    INRIA/HU
+
+"""
+
+# Module documentation variables:
+__authors__="""Szymon Stoma    
+"""
+__contact__=""
+__license__="Cecill-C"
+__date__="pia mar 30 14:50:15 CEST 2007"
+__version__="0.1"
+__docformat__= "restructuredtext en"
+__revision__="$Id$"
+
+##BEGIN DOC REMOVE
+import networkx as nx
+import pylab as pl
+##END DOC REMOVE
+
+
+def show_cells( wt, with_labels = False ):
+    """Plot cells projection on XY plane (does not draw walls).
+    """
+    nx.draw_networkx( wt._cells, _pos2tuple_pos_revxy( cell_centers( wt ) ), with_labels=with_labels, style='dotted', node_size= wt.const.cell_node_size )
+    nx.draw_networkx_edges( wt._wvs, _pos2tuple_pos_revxy( wt._wv2pos ), edge_color='r' )
+    pl.show()
+
+def show_cells_with_wvs( wt, with_labels = False ):
+    """Plot cells projection on XY plane (draws walls).
+    """
+    nx.draw_networkx( wt._cells, _pos2tuple_pos_revxy( cell_centers( wt ) ), with_labels=with_labels, style='dotted', node_size= wt.const.cell_node_size )
+    nx.draw_networkx( wt._wvs, _pos2tuple_pos_revxy( wt._wv2pos ), edge_color='r', with_labels=with_labels,node_size= wt.const.wv_node_size )
+    pl.show()
