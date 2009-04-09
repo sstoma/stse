@@ -1,0 +1,87 @@
+
+import sys
+import os
+
+from setuptools import setup, find_packages
+from os.path import join as pj
+
+build_prefix = "build-scons"
+
+
+# Header
+
+# Setup script
+
+# Package name
+name = 'stsf'
+namespace = 'openalea'
+pkg_name= namespace + '.' + name
+
+# Package version policy
+version= '1.0.0' 
+
+# Description
+description= 'Space-time simulation framework' 
+long_description= '''
+Spatio-temporal simulation framework (STSF) is set of open-source tools used to
+perform spatio-temporal simulations in discret structures. The framework
+contains modules to represent, analyse, and model spatial distributions of
+species in static and dynamic (e.g. growing) structures. '''
+
+# Author
+author= 'Szymon Stoma'
+author_email= ''
+url= 'http://stoma.name/stsf/'
+license= 'Cecill-C' 
+
+
+
+# Main setup
+setup(
+    # Meta data
+    name=name,
+    version=version,
+    description=description,
+    long_description=long_description,
+    author=author,
+    author_email=author_email,
+    url=url,
+    license=license,
+    keywords = '',
+
+    
+    # Define what to execute with scons
+    #scons_scripts=['SConstruct'],
+    #scons_parameters=["build","build_prefix="+build_prefix],
+
+    # Packages
+    namespace_packages = [namespace],
+    create_namespaces = True,
+    py_modules = [],
+    packages =  [ 'openalea.' + x for x in find_packages('src') ],
+	package_dir = { 'openalea.stsf':  pj('src','stsf'), "":"src" }, 
+
+    
+    include_package_data = True,
+    package_data = {'' : ['*.pyd', '*.so'],},
+
+    zip_safe= False,
+
+    #lib_dirs = {'lib' : pj(build_prefix, 'lib'), },
+    #inc_dirs = { 'include' : pj(build_prefix, 'include') },
+	#share_dirs = { 'tutorial' : pj('examples','tutorial')},
+    
+    #postinstall_scripts = [],
+
+    # Scripts
+    entry_points = {},
+
+    # Dependencies
+    setup_requires = ['openalea.deploy'],
+    dependency_links = ['http://openalea.gforge.inria.fr/pi'],
+    install_requires = [],
+
+
+    )
+
+
