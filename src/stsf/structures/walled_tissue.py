@@ -85,7 +85,7 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         self._tissue_properties = {}
         """:# to store information about the tissue"""
                 
-        self._init_tissue_properties()    
+        self._init_tissue_properties()
 
     def wv_pos( self, wv=None, pos = None ):
         """Returns/Sets the position of wall vertex
@@ -145,6 +145,7 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         self._cell2properties={}
         self._cell_edge2properties={}
         self._tissue_properties = {}
+        self._init_tissue_properties()
 
     
     # BEGIN Physiology related methods
@@ -214,6 +215,7 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """
         for i in self.const.tissue_properties.keys():
             self._tissue_properties[ i ] = self.const.tissue_properties[ i ]
+
 
             
     def  tissue_property( self, property=None, value=None ):

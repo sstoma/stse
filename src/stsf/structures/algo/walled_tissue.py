@@ -189,6 +189,15 @@ def _pos2tuple_pos_revxy( cell2baricenter ):
         t[ c ] = (-t[ c ].y, -t[ c ].x)
     return t
 
+def pos2tuple_pos( cell2baricenter ):
+    """Returns the hash cell 2 tuple x, y where the x, y are
+    coordinats of the baricenter.
+    """
+    t = {}
+    for c in cell2baricenter:
+        t[ c ] = (cell2baricenter[c].x, cell2baricenter[c].y)
+    return t
+
 #def get_cell_normal( wt, cell = None ):
 #    """Gets the normal for the cell by collecting the normals from all vertices.
 #    Note: obsolate. It uses pressure_center to find normals. Currently the WalledTissue is
