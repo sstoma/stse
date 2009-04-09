@@ -1,1 +1,1 @@
-from compartment_editor import *
+#from compartment_editor import *

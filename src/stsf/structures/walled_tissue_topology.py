@@ -30,9 +30,9 @@ import networkx as nx
 ##END DOC REMOVE
 import copy
 
-import openalea.stsf.tools.misc as tools
+from ..tools.misc import find_edge_order, find_edges_order
 import openalea.plantgl.all as pgl
-from  openalea.stsf.structures.algo.walled_tissue_topology import create_shapes_for_new_cells
+from  algo.walled_tissue_topology import create_shapes_for_new_cells
 
 ## BEGIN pickle visual vectors
 #import visual
@@ -442,10 +442,10 @@ class TissueTopology:
         # finding good order of s1, t1 and s2, t2
         shape = self.cell2wvs( cell )
         # finding which edge is first
-        s1, t1 = tools.find_edge_order( s1, t1, shape)
-        s2, t2 = tools.find_edge_order( s2, t2, shape)
+        s1, t1 = find_edge_order( s1, t1, shape)
+        s2, t2 = find_edge_order( s2, t2, shape)
         first_order = copy.copy((s1, t1, s2, t2))
-        second_order = tools.find_edges_order( s1, t1, s2, t2, shape)
+        second_order = find_edges_order( s1, t1, s2, t2, shape)
         s1, t1, s2, t2 = second_order
         if first_order == second_order:
             changed = False

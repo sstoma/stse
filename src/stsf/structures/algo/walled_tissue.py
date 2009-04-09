@@ -30,7 +30,7 @@ import math
 import copy
 
 import openalea.plantgl.all as pgl
-import openalea.stsf.structures.walled_tissue_topology as walled_tissue_topology
+import walled_tissue_topology
 
 def create( wt, wv2pos = {}, cell2wv_list = {} ):
     """Creates the WalledTissue structure from data.

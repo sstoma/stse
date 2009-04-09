@@ -27,7 +27,7 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
-import openalea.stsf.structures.algo.walled_tissue_topology as walled_tissue_topology
+import walled_tissue_topology
 import openalea.plantgl.all as pgl
 
 def dscs_shortest_wall( wt, cell ):

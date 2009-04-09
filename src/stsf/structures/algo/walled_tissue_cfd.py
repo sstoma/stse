@@ -26,7 +26,7 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
-from openalea.stsf.structures.algo.walled_tissue import calculate_cell_surface
+from walled_tissue import calculate_cell_surface
 
 def cfd_perimiter_rule(wtt):
     """Returns list of cells which should divide acording to perimiter rule"""

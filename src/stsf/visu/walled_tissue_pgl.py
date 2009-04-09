@@ -27,8 +27,8 @@ __revision__="$Id$"
 import  openalea.plantgl.ext.all as pd
 import  openalea.plantgl.ext.color as color
 import  openalea.plantgl.all as pgl
-from openalea.mersim.tissue.algo.walled_tissue import cell_center, wv_edge2cell_edge, calculate_cell_surface
-from openalea.stsf.tools.misc import segment, cast_to_0_1_segment 
+from ..structures.algo.walled_tissue import cell_center, wv_edge2cell_edge, calculate_cell_surface
+from ..tools.misc import segment, cast_to_0_1_segment 
 
 
 

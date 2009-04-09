@@ -28,7 +28,7 @@ __revision__="$Id$"
 
 
 import copy
-import openalea.stsf.structures.walled_tissue_topology as walled_tissue_topology
+import walled_tissue_topology
 
 
 ## BEGIN pickle visual vectors
@@ -337,4 +337,4 @@ if __name__ == '__main__':
     #    print "__ REMOVING CELL", i
     #    wt.remove_cell( i )
     #    wt.show_cells_with_wvs(True)
-
+    pass
