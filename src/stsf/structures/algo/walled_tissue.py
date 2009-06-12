@@ -305,6 +305,17 @@ def find_top_cell_by_2d_distance_to_center( wt ):
 
 
 def wv_edge2cell_edge( wt, wv_edge ):
+    """<Short description of the function functionality.>
+    
+    <Long description of the function functionality.>
+    
+    :parameters:
+        arg1 : `T`
+            <Description of `arg1` meaning>
+    :rtype: `T`
+    :return: <Description of ``return_object`` meaning>
+    :raise Exception: <Description of situation raising `Exception`>
+    """
     cl1 = wt._wv2cell_list[ wv_edge[ 0 ] ]
     cl2 = wt._wv2cell_list[ wv_edge[ 1 ] ]    
     s = []
@@ -316,6 +327,17 @@ def wv_edge2cell_edge( wt, wv_edge ):
     return tuple( s )
 
 def cell_edge2wv_edge( wt, cell_edge ):
+    """<Short description of the function functionality.>
+    
+    <Long description of the function functionality.>
+    
+    :parameters:
+        arg1 : `T`
+            <Description of `arg1` meaning>
+    :rtype: `T`
+    :return: <Description of ``return_object`` meaning>
+    :raise Exception: <Description of situation raising `Exception`>
+    """
     cl1 = wt.cell2wvs_edges( cell=cell_edge[ 0 ] )
     cl2 = wt.cell2wvs_edges( cell=cell_edge[ 1 ] )
     s = []

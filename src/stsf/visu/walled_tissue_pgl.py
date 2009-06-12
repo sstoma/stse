@@ -139,8 +139,10 @@ def f_property2material( property=None, property_material=pgl.Material((0,255,0)
     return f
 
 weighted_property2material_green_range = color.GreenMap(outside_values=True)
-weighted_property2material_green_range._position_list=[0.,0.1,1.]
-def f_weighted_property2material( property=None, range=[0,1], property_material=pgl.Material((0,255,0)), normal_material=pgl.Material((0,0,0)) ):
+weighted_property2material_green_range._position_list=[0.,0.5,1.]
+def f_weighted_property2material( property=None, range=[0,1],
+                                 property_material=pgl.Material((0,255,0)),
+                                 normal_material=pgl.Material((0,0,0)) ):
     weighted_property2material_green_range.set_value_range(range)
     def f( wt=None, cell=None, **keys):
         if wt._cell2properties[cell].has_key(property):
@@ -149,7 +151,7 @@ def f_weighted_property2material( property=None, range=[0,1], property_material=
     return f
 
 
-def f_green_material( wt=None, cell=None ):
+def f_green_material( wt=None, cell=None, **keys ):
     """Returns green material for every cell.
     
     <Long description of the function functionality.>
@@ -162,17 +164,66 @@ def f_green_material( wt=None, cell=None ):
     :raise Exception: <Description of situation raising `Exception`>
     """
     return pgl.Material((0,255,0))    
+
+
+def f_property2scalar(wt_property_method=None,
+                      property = None,
+                      default_value = 0.,
+                      segment = None,
+                      factor = 1.):
+    """Returns a function which takes an object and
+    returns a scalar value.
+    
+    Function is built using the wt_property_method
+    which is used to get a scalar value of object. If wt_property_method does
+    not have a requested object/value or if the returned value can not be
+    converted into float, default_value is returned.
+    
+    :parameters:
+        wt_property_method : function
+            Function which needs to return value for 2 arguments, one will be an
+            object, second is a property name.
+        property : string
+            Property identificator, used by wt_property_method.
+        default_value : float
+            Default value returned in case described in function synopis.
+        segment : (float, float)
+            If specified, the returned value is converted to 0,1 segment
+            according to this range and multiplied by factor.
+        factor : float
+            The value is used to scale the returned value - first the value is
+            converted to fit the 0,1 segment, and then it is multiplied by
+            the factor.
+
+    :rtype: function
+    :return: Function returning a scalar value for an object argument.
+    """
+    def f( object,  **keys):
+        try:
+            v = wt_property_method( object, property )
+            if not segment:
+                return float( v )
+            else:
+                return factor * cast_to_0_1_segment( base_segment = segment,
+                                           value = v)
+        except LookupError, ValueError:
+            return float( default_value )
+    return f
+
+    
+    
     
 def visualisation_pgl_2D_plain( wt, max_wall_absolute_thickness=0.15,
                                     abs_intercellular_space=0., material_f=f_green_material,
                                     revers=True,  wall_color=pgl.Color4(0,0,0,0),
                                     pump_color=pgl.Color4(255,0,0,0),
-                                    stride=100,
+                                    stride=15,
                                     **keys):
     
     from openalea.stsf.visu.draw_cell_pgl import draw_cell
     l=[]
     for i in wt.cells():
+        # print " # displaying cell:", i
         cell_corners=[wt.wv_pos(j) for j in wt.cell2wvs(i)]
         wall_relative_thickness= [0 for i in wt.cell2wvs_edges(i)]
         cell_color=material_f(wt=wt, cell=i)
@@ -183,6 +234,42 @@ def visualisation_pgl_2D_plain( wt, max_wall_absolute_thickness=0.15,
     for i in l: pd.get_scene().add(pgl.Shape(i,pgl.Material( (0,0,0) )))
     return 0
 
+def visualisation_pgl_2D_varried_membrane_thickness( wt,
+                                    max_wall_absolute_thickness=0.15,
+                                    abs_intercellular_space=0.,
+                                    abs_membrane_space=0.,
+                                    material_f=f_green_material,
+                                    revers=True,
+                                    wall_color=pgl.Color4(0,0,0,0),
+                                    pump_color=pgl.Color4(255,0,0,0),
+                                    stride=15,
+                                    f_membrane_thickness=None,
+                                    **keys):
+    
+    from openalea.stsf.visu.draw_cell_pgl import draw_cell
+    
+    l=[]
+    for i in wt.cells():
+        # print " # displaying cell:", i
+        cell_corners=[wt.wv_pos(j) for j in wt.cell2wvs(i)]
+        if not f_membrane_thickness:
+            wall_relative_thickness = [0 for i in wt.cell2wvs_edges(i)]
+        else:
+            wall_relative_thickness = []
+            for i in wt.cell2wvs_edges( i ):
+                try:
+                    v = f_membrane_thickness( wv_edge2cell_edge( wt, i ) )
+                except TypeError:
+                    v = f_membrane_thickness( -1 )
+                wall_relative_thickness.append( v )
+        
+        cell_color=material_f(wt=wt, cell=i)
+        cell_color=pgl.Color4(cell_color.ambient.red,cell_color.ambient.green,cell_color.ambient.blue,0)
+        if revers:
+            cell_corners.reverse()
+        l.append( draw_cell (cell_corners, wall_relative_thickness, abs_intercellular_space, abs_intercellular_space+abs_membrane_space, cell_color, wall_color, pump_color, stride=stride, nb_ctrl_pts=3, sc=None))
+    for i in l: pd.get_scene().add(pgl.Shape(i,pgl.Material( (0,0,0) )))
+    return 0
 
 
     

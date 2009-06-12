@@ -238,18 +238,36 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
     def _init_cell_edge_properties( self, cell_edge=None):
         """Inits cell_edge properties. All properties should be initialised here.
         """
+        k,l = cell_edge
         self._cell_edge2properties[ cell_edge ] = {}
+        self._cell_edge2properties[ (l,k) ] = {}
         for i in self.const.cell_edge_properties:
-            self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ i ] = copy.copy( self.const.cell_edge_properties[ i ] )
-
- 
+            #print " #Initializing: ", i
+            #self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ i ] = copy.copy( self.const.cell_edge_properties[ i ] )
+            self._cell_edge2properties[ cell_edge ][ i ] = copy.copy( self.const.cell_edge_properties[ i ] )
+            self._cell_edge2properties[ (l,k) ][ i ] = copy.copy( self.const.cell_edge_properties[ i ] )
+            
     def  cell_edge_property( self, cell_edge=None, property=None, value=None ):
-        """Returns/sets property for cell_edge
+        """Returns/sets property for non-directed cell_edge. Property is set
+        for both directions. When asking about property value, one of the
+        cell_edges is queried.
         """
         if value == None:
-            return self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ property ]
+            #return self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ property ]
+            return self._cell_edge2properties[ cell_edge ][ property ]
         else:
-            self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ property ] = value
+            #self._cell_edge2properties[ self.cell_edge_id( cell_edge ) ][ property ] = value
+            self._cell_edge2properties[ cell_edge ][ property ] = value
+            self._cell_edge2properties[ ( cell_edge[ 1 ], cell_edge[ 0 ] ) ][ property ] = value
+            
+    def  directed_cell_edge_property( self, cell_edge=None, property=None, value=None ):
+        """Returns/sets property for directed cell_edge.
+        """
+        if value == None:
+            return self._cell_edge2properties[ cell_edge ][ property ]
+        else:
+            self._cell_edge2properties[ cell_edge ][ property ] = value
+
     
     # END cell edge properties
     

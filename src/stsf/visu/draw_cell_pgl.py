@@ -55,16 +55,25 @@ def intersection (A1, A2, B1, B2) :
                      return (A1+B2)/2
        return A1+S3*u
 
-def draw_cell (cell_corners, wall_relative_thickness, thickness_min, thickness_max, cell_color, wall_color, pump_color, stride=40, nb_ctrl_pts=3, sc=None) :
-       """
-       cell corners : corners of cell (assume that the cell is closed by linking last corner with first corner)
-       assume direct orientation (anti clockwise)
-       wall_thickness : absolute thickness of each wall
-       cell_color : color of the internal of the cell
-       wall_color : color of the outer layer
-       pump_color : color of the pumps on the wall
-       stride : number of points for the discretization
-       nb_ctrl_points : number of control point used for each wall (plus the 2 extremities)
+
+def draw_cell (cell_corners, wall_relative_thickness, thickness_min, thickness_max, cell_color, wall_color, pump_color, stride=20, nb_ctrl_pts=3, sc=None) :
+       """ Draws a cell.
+       
+       :parameters:
+              cell corners : [Vector3,..]
+                     corners of cell (assume that the cell is closed by linking last corner with first corner)assume direct orientation (anti clockwise)
+              wall_relative_thickness : [float,..]
+                     absolute thickness of each wall
+              cell_color : plantgl.Color4
+                     color of the internal of the cell
+              wall_color : plantgl.Color4
+                     color of the outer layer
+              pump_color : plantgl.Color4
+                     color of the pumps on the wall
+              stride : int 
+                     number of points for the discretization
+              nb_ctrl_points : int
+                     number of control point used for each wall (plus the 2 extremities)
        """
        sph=Sphere(0.1)
        mat=Material((0,0,0))

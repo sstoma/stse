@@ -67,7 +67,7 @@ class TissueTopology:
     def __init__( self, const = "!SetCorrectConstants!"  ):
         self._wvs = nx.Graph( name = 'CellWalls' )
         """#: to store the information about the cell wvs"""
-        self._cells = nx.Graph( name = 'Cells' )
+        self._cells = nx.DiGraph( name = 'Cells' )
         """#: to store the information about the cell neigborhood relation"""
         self._cell2wv_list = {}
         """#: to store the relation between cells and *ordered* wv"""
@@ -137,6 +137,7 @@ class TissueTopology:
             raise KeyError("No cell vertex.")
         else:
             self._cells.add_edge( c1, c2 )
+            self._cells.add_edge( c2, c1 )
             return self.cell_edge_id( (c1, c2 ) )
         
     def add_wv_edge( self, w1=None, w2=None):
@@ -181,15 +182,16 @@ class TissueTopology:
     def cell_edges( self ):
         """Return the collection of cell edges.
         """
-        l = self._cells.edges()
-        z = []
-        for i in l:
-            (i1, i2) = i
-            if i1 < i2:
-                z.append(i)
-            else:
-                z.append((i2,i1))
-        return z
+        return self._cells.edges()
+        #l = self._cells.edges()
+        #z = []
+        #for i in l:
+        #    (i1, i2) = i
+        #    if i1 < i2:
+        #        z.append(i)
+        #    else:
+        #        z.append((i2,i1))
+        #return z
 
     def wv_edges( self ):
         """Returns the collection of cell edges.
