@@ -1,1 +1,0 @@
-import remove_cell_strategy

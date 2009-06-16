@@ -1,2 +1,0 @@
-import epydoc_sample
-import epydoc_template
