@@ -1,2 +1,2 @@
 #!/bin/bash
-epydoc --html -o doc -v --name STSF --docformat restructuredtext --graph all --inheritance included  openalea.stsf.core openalea.stsf.growth openalea.stsf.structures openalea.stsf.io openalea.stsf.tools openalea.stsf.visu
+epydoc --html -o doc -v --name STSE --docformat restructuredtext --graph all --inheritance included  openalea.stse.core openalea.stse.growth openalea.stse.structures openalea.stse.io openalea.stse.tools openalea.stse.visu

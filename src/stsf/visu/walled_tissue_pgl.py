@@ -220,7 +220,7 @@ def visualisation_pgl_2D_plain( wt, max_wall_absolute_thickness=0.15,
                                     stride=15,
                                     **keys):
     
-    from openalea.stsf.visu.draw_cell_pgl import draw_cell
+    from openalea.stse.visu.draw_cell_pgl import draw_cell
     l=[]
     for i in wt.cells():
         # print " # displaying cell:", i
@@ -246,7 +246,7 @@ def visualisation_pgl_2D_varried_membrane_thickness( wt,
                                     f_membrane_thickness=None,
                                     **keys):
     
-    from openalea.stsf.visu.draw_cell_pgl import draw_cell
+    from openalea.stse.visu.draw_cell_pgl import draw_cell
     
     l=[]
     for i in wt.cells():

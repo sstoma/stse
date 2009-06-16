@@ -44,110 +44,8 @@ def create( wt, wv2pos = {}, cell2wv_list = {} ):
     walled_tissue_topology.create( wt, cell2wv_list=cell2wv_list)
     
     for i in wv2pos.keys():
-        #wt.add_wv( wv=i, pos=visual.vector( wv2pos[ i ].x, wv2pos[ i ].y, wv2pos[ i ].z ) )
-        #TODO thing if conversion is necessary
         wt.add_wv( wv=i, pos=pgl.Vector3( wv2pos[ i ].x, wv2pos[ i ].y, wv2pos[ i ].z ), call_inherited=False )
     
-def create_tissue_topology_from_simulation( wt, get_z_coords=True, clear_all=True ):
-    import merrysim as m
-    if clear_all: wt.clear_all()
-    #TODO to be dropped
-    # to load the data from supported format
-    #!TODO ugly but currently are more important things to do
-    _simulation = m.Simulation( wt.const.meristem_data , 10, 0.1 )
-    
-    # loading the walls with coords
-    wg = _simulation.get_tissue().wall_graph()
-    ei = wg.edges()
-    try:
-        while (1):
-            e = ei.next()
-            v1Id = wg.source( e )
-            v2Id = wg.target( e )
-            v1 = wg.vertex_position( v1Id )
-            v2 = wg.vertex_position( v2Id )
-            #pgl wt.add_wv( v1Id, pgl.Vector3( v1.x, v1.y, v1.z ) )
-            #pgl wt.add_wv( v2Id, pgl.Vector3( v2.x, v2.y, v2.z ) )
-            #wt.add_wv( v1Id, visual.vector( v1.x, v1.y, v1.z ) )
-            #wt.add_wv( v2Id, visual.vector( v2.x, v2.y, v2.z ) )
-            wt.add_wv( v1Id, pgl.Vector3( v1.x, v1.y, v1.z ) )
-            wt.add_wv( v2Id, pgl.Vector3( v2.x, v2.y, v2.z ) )
-            wt.add_wv_edge( v1Id, v2Id )
-    except StopIteration:
-        pass
-    
-    # loading the cells
-    wg = _simulation.get_tissue()
-    ei = wg.edges()
-    h = {}
-    ei = wg.edges()
-    try:
-        while (1):
-            e = ei.next()
-            v1Id = wg.source( e )
-            v2Id = wg.target( e )
-            wt.add_cell( v1Id )
-            wt.add_cell( v2Id )
-            wt.add_cell_edge( v1Id, v2Id )
-    except StopIteration:
-        pass
-    
-
-    # loading the cell2wv
-    wg = _simulation.get_tissue()
-    ci = wg.vertices()
-    try:
-        while (1):
-            c = ci.next()
-            wv = wg.cell_association( c )
-            try:
-                while (1):
-                    w = wv.next()
-                    wt.cell2wvs( c, wt.cell2wvs( c ).append( w ) ) 
-            except Exception:
-                pass
-    except StopIteration:
-        pass
-    
-    # creating the wv2cell
-    for c in wt.cells():
-        for w in wt.cell2wvs( c ):
-            if c not in wt.wv2cells( w ):
-                wt.wv2cells( w, wt.wv2cells( w ).append( c ) )
-
-    try:
-        if get_z_coords:
-            _get_z_coords( wt )
-        pass
-    except Exception:
-        print "Loading of Z coords skipped"
-        
-    #for vw in wt.wvs():
-    #    wt.wv_pos( vw, wt.wv_pos( vw )*wt.const.meristem_load_scale )
-    ##finding inside
-    walled_tissue_topology.initial_find_the_inside_of_tissue( wt )
-
-def _get_z_coords( wt, **keys):
-    """Docs in Pierrs' code
-    TODO: too much is hardcoded right now.
-    """
-    import merrysim as m
-    if wt.const.reconstruct_3d_from_slices: 
-        slices = m.graph.Slices(wt.const.projection_path, 'red')
-    z_mul = 6.1
-    ratio = 3./4
-    for vw in wt.wvs():
-        v1 = wt.wv_pos( vw )
-        if wt.const.reconstruct_3d_from_slices: 
-            z = slices.get_z(v1.x, -v1.y, z_mul, ratio)
-        else:
-            z = 0
-        v1 = pgl.Vector3(v1.x, v1.y, z )
-        #v1 = visual.vector(v1.x, v1.y, z )
-        wt.wv_pos( vw, v1 )
-
-
-
 
 def cell_center( wt, cell = None ):
     """Return baricenter of cell.
@@ -198,26 +96,7 @@ def pos2tuple_pos( cell2baricenter ):
         t[ c ] = (cell2baricenter[c].x, cell2baricenter[c].y)
     return t
 
-#def get_cell_normal( wt, cell = None ):
-#    """Gets the normal for the cell by collecting the normals from all vertices.
-#    Note: obsolate. It uses pressure_center to find normals. Currently the WalledTissue is
-#    in L/R mode and this information should be used to get the normals.
-#    """
-#    t = []
-#    pressure_center=wt.const.simple_pressure_center
-#    av_normal = visual.vector()
-#    for w in wt.cell2wvs( cell = cell):
-#        lm = wt._wvs.neighbors( w )
-#        if len( lm ) >= 3:
-#            normal = visual.cross( wt.wv_pos( wv=lm[1] ) - wt.wv_pos( lm[ 0 ] ), wt.wv_pos( lm[2] ) - wt.wv_pos( lm[ 1 ] ) )
-#            if visual.mag( (wt.wv_pos( w ) +normal)  - pressure_center ) > visual.mag( (wt.wv_pos( w ) - normal) -  pressure_center ):
-#                av_normal += visual.norm( normal ) 
-#            else:
-#                av_normal += visual.norm( -normal ) 
-#    return visual.norm( av_normal )
 
-def tissue_center( wt ):
-    return wt.tissue_center_
 
 def calculate_average_cell_surface( wt ):
     """Calculates the avarage cell surface for all cells in the tissue. Importatnt thing: check for degenerated cells
@@ -228,12 +107,6 @@ def calculate_average_cell_surface( wt ):
         s += calculate_cell_surface( wt, cell = c )
     return s/len( wt.cells() )
 
-def center_group( wt ):
-    """Returns a group of cells which surrounds initial cell (a cell with IC==True)
-    """
-    for c in wt.cells():
-        if wt.cell_property( cell=c, property="IC"):
-            return [ c ]+wt.cell_neighbors( c )
 
 
 def investigate_cell( wt, cell ):
@@ -249,23 +122,6 @@ def investigate_cell( wt, cell ):
     else:
         return False
     
-def nbr_border_cells( wt, refresh=False ):
-    """
-    Note: working correctly only if cells are beeing fixed. The method fix_cells should identify and mark
-    cells identity.
-    """
-    if  not refresh and wt._nbr_border_cell_last_refresh_time  ==  wt.time:
-        return wt._nbr_border_cell
-
-    nbr_border_cells=0
-    for i in wt.cells():
-        if wt.cell_property(cell=i, property="border_cell"):
-            nbr_border_cells+=1
-            
-    wt._nbr_border_cell_last_refresh_time=wt.time
-    wt._nbr_border_cell = nbr_border_cells
-    
-    return wt._nbr_border_cell
 
 def find_top_cell_by_z_coord( wt ):
     cell2center = wt.cell_centers()

@@ -31,40 +31,13 @@ import copy
 import walled_tissue_topology
 
 
-## BEGIN pickle visual vectors
-#import cPickle as pickle
-#import copy_reg
-#def dump_visual_vector( v ):
-#    return (visual.vector, ( v.x,v.y,v.z ) )
-#copy_reg.pickle(visual.vector, dump_visual_vector)
-## END pickle visual vectors
-
-
 class WalledTissue(walled_tissue_topology.TissueTopology):
-    """Gathers information (curently Topology+Physiology) about Tissue.
-    This is main *data structure* for storing Tissue related properties.
-    It extends ``walled_tissue_topology.TissueTopology`` to store tissue physiology and basic
-    physiology editing algorithms. It inherits because the physiology requires
-    topology.
-    
-    The mechanism for setting cell properties:
-        
-        #. in self.const.*_properties we can find an information describing
-        all required * properties.
-        
-        #. they are used in ``_init_*_properties`` to set a default values (taken from ``self.const...``).
-        
-        #. init should be updated manually (if required).
-    
-    Currently they are two ways of creating initialised WalledTissue:
-    
-        #. create(..) - This one should be used when the WT data are previousely prepared.
-        
-        #. _create_from.. - This one should not be used. It depands on Pierres code and old merrysim libraries.
-        Anyway, when it is used it reads meristem .dat file (depanding on configuration in const),
-        tries to load stack files to get z coords. In the future it should use create(..).
-    
-    Note: The [_]create* is not called from __init__.
+    """
+    Gathers information (curently Topology+Physiology) about Tissue. This is
+    main *data structure* for storing Tissue related properties. It extends
+    ``walled_tissue_topology.TissueTopology`` to store tissue physiology and
+    basic physiology editing algorithms. It inherits because the physiology
+    requires topology.
     """
 
     def __init__( self, const=None ):

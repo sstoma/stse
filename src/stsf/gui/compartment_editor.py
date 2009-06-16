@@ -16,8 +16,8 @@ from vtk.util import colors
 import numpy
 import random
 
-import openalea.stsf.io.qhull
-import openalea.stsf.structures.utils.qhull
+import openalea.stse.io.qhull
+import openalea.stse.structures.utils.qhull
 
 from enthought.pyface.action.api import Action, Group, MenuBarManager, MenuManager, Separator
 

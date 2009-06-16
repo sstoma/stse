@@ -15,10 +15,10 @@
     Szymon Stoma
 """
 
-from openalea.stsf.tools.convex_hull import hulls
-from openalea.stsf.structures.walled_tissue import WalledTissue
-from openalea.stsf.structures.walled_tissue_const import WalledTissueConst
-from openalea.stsf.structures.algo.walled_tissue import create
+from openalea.stse.tools.convex_hull import hulls
+from openalea.stse.structures.walled_tissue import WalledTissue
+from openalea.stse.structures.walled_tissue_const import WalledTissueConst
+from openalea.stse.structures.algo.walled_tissue import create
 from openalea.plantgl.math import Vector3
 import math
 from pylab import inf
@@ -119,7 +119,7 @@ def read_dat2walled_tissue(filename, tissue_properties=None, screen_coordinates=
         if len( cell2points[ i ] ) < 3:
             _cells_to_remove[ i ] = cell2points[ i ]
     for i in _cells_to_remove:
-        print " ! removing <3 point cell: ", i
+        print " ! removing <3 point cell: ", ip
         del cell2points[ i ]
     for i in _cells_to_remove:
         for j in _cells_to_remove[ i ]:

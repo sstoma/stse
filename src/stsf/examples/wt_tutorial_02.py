@@ -22,10 +22,10 @@ __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
 
-from openalea.stsf.structures.walled_tissue import WalledTissue
-from openalea.stsf.structures.walled_tissue_const import WalledTissueConst
-from openalea.stsf.structures.algo.walled_tissue import create
-from openalea.stsf.io.walled_tissue.dat_representation import read_dat2walled_tissue, read_link_file
+from openalea.stse.structures.walled_tissue import WalledTissue
+from openalea.stse.structures.walled_tissue_const import WalledTissueConst
+from openalea.stse.structures.algo.walled_tissue import create
+from openalea.stse.io.walled_tissue.dat_representation import read_dat2walled_tissue, read_link_file
 from openalea.plantgl.math import Vector3
 
 # we define the set of settings for a tissue
@@ -63,11 +63,11 @@ for (i,j) in links:
 #    wt.wv_pos( i, wt.wv_pos( i )/ 100. )
 
 ### sample visualization using pylab
-#from openalea.stsf.visu.walled_tissue_pylab import show_cells_with_wvs
+#from openalea.stse.visu.walled_tissue_pylab import show_cells_with_wvs
 #show_cells_with_wvs(wt, True)
 
 ## sample visualization using plantGL
-from openalea.stsf.visu.walled_tissue_pgl import visualisation_pgl_2D_plain
+from openalea.stse.visu.walled_tissue_pgl import visualisation_pgl_2D_plain
 visualisation_pgl_2D_plain( wt )
 
 ## adjusting visulalization

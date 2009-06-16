@@ -26,11 +26,14 @@ __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
 class WalledTissueConst:
-    cell_properties ={}
-    tissue_properties ={}
-    cell_edge_properties={}
-    wv_properties={}
-    wv_edge_properties={}
-    
-    def __init__( self, name ):
+    """Used to store tissue properties.
+    """
+    def __init__( self, name="Tissue", cell_properties={}, tissue_properties={},
+                 cell_edge_properties={}, wv_properties={},
+                 wv_edge_properties={}):
         self.name = str( name )
+        self.cell_properties = cell_properties
+        self.tissue_properties = tissue_properties
+        self.cell_edge_properties = cell_edge_properties
+        self.wv_properties = wv_properties
+        self.wv_edge_properties = wv_edge_properties

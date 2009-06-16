@@ -25,9 +25,9 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
-from openalea.stsf.structures.walled_tissue import WalledTissue
-from openalea.stsf.structures.walled_tissue_const import WalledTissueConst
-from openalea.stsf.structures.algo.walled_tissue import create
+from openalea.stse.structures.walled_tissue import WalledTissue
+from openalea.stse.structures.walled_tissue_const import WalledTissueConst
+from openalea.stse.structures.algo.walled_tissue import create
 from openalea.plantgl.math import Vector3
 
 # we define the set of settings for a tissue
@@ -65,11 +65,11 @@ cell2wv_list={
 create(wt, wv2pos=wv2pos, cell2wv_list=cell2wv_list)
 
 ## sample cell inspection
-from openalea.stsf.structures.algo.walled_tissue import investigate_cell
+from openalea.stse.structures.algo.walled_tissue import investigate_cell
 investigate_cell(wt, 1)
 
 ## sample visualization using pylab
-from openalea.stsf.visu.walled_tissue_pylab import show_cells_with_wvs
+from openalea.stse.visu.walled_tissue_pylab import show_cells_with_wvs
 show_cells_with_wvs(wt, True)
 
 

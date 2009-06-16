@@ -36,7 +36,6 @@ def create( wtt, cell2wv_list = {} ):
         :param cell2wv_list: contains the mapping of cell ids to ORDERED (in the sens of walls) wv ids.
         :type cell2wv_list: hash( cell -> wv_list )
         
-        TODO: TEST!!!!!
     """
     
     # to get the cell neighborhood from shared walls
@@ -76,22 +75,7 @@ def create( wtt, cell2wv_list = {} ):
                 wtt.wv2cells( w, wtt.wv2cells( w ).append( c ) )
     initial_find_the_inside_of_tissue( wtt )
 
-def investigate_cell( wtt, cell ):
-    """Gives some data about cell internal representation. Mainly for debugging.
-    """
-    if wtt._cells.has_node( cell ):
-        print "Cell id:", cell
-        print "Shape:", wtt.cell2wvs( cell ) 
-        print "Neighbors:", wtt.cell_neighbors( cell=cell )
-        print "WV in this cell are also in:"
-        for w in wtt.cell2wvs( cell ):
-            print " ", w, ": ", wtt.wv2cells( w )
-        return True
-    else:
-        print "Cell",cell,"doesn't exist.."
-        if (wtt._cell2wv_list.has_key( cell ) ):
-            print "Problem in _cell2wv_list -- cell not cleared."
-        return False
+
 
 def initial_find_the_inside_of_tissue( wtt ):
     """Changes the internal cell representation to keep cells with the same
@@ -120,7 +104,22 @@ def initial_find_the_inside_of_tissue( wtt ):
                 if not good_order:
                     wtt.cell2wvs( c, wtt.cell2wvs( c ).reverse() ) 
 
-                    
+def investigate_cell( wtt, cell ):
+    """Gives some data about cell internal representation. Mainly for debugging.
+    """
+    if wtt._cells.has_node( cell ):
+        print "Cell id:", cell
+        print "Shape:", wtt.cell2wvs( cell ) 
+        print "Neighbors:", wtt.cell_neighbors( cell=cell )
+        print "WV in this cell are also in:"
+        for w in wtt.cell2wvs( cell ):
+            print " ", w, ": ", wtt.wv2cells( w )
+        return True
+    else:
+        print "Cell",cell,"doesn't exist.."
+        if (wtt._cell2wv_list.has_key( cell ) ):
+            print "Problem in _cell2wv_list -- cell not cleared."
+        return False                    
                         
 def create_shapes_for_new_cells( shape, v1, v2 ):
     """Create new cell shapes with a shape from old ones and the data from v1 and v2 (sx, tx. vxd).

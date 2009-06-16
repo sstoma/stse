@@ -13,7 +13,7 @@ build_prefix = "build-scons"
 # Setup script
 
 # Package name
-name = 'stsf'
+name = 'stse'
 namespace = 'openalea'
 pkg_name= namespace + '.' + name
 
@@ -21,9 +21,9 @@ pkg_name= namespace + '.' + name
 version= '1.0.0' 
 
 # Description
-description= 'Space-time simulation framework' 
+description= 'Space-time simulation environment' 
 long_description= '''
-Spatio-temporal simulation framework (STSF) is set of open-source tools used to
+Spatio-temporal simulation environment (STSE) is set of open-source tools used to
 perform spatio-temporal simulations in discret structures. The framework
 contains modules to represent, analyse, and model spatial distributions of
 species in static and dynamic (e.g. growing) structures. '''
@@ -31,7 +31,7 @@ species in static and dynamic (e.g. growing) structures. '''
 # Author
 author= 'Szymon Stoma'
 author_email= ''
-url= 'http://stoma.name/stsf/'
+url= 'http://stoma.name/stse/'
 license= 'Cecill-C' 
 
 
@@ -59,7 +59,7 @@ setup(
     create_namespaces = True,
     py_modules = [],
     packages =  [ 'openalea.' + x for x in find_packages('src') ],
-	package_dir = { 'openalea.stsf':  pj('src','stsf'), "":"src" }, 
+	package_dir = { 'openalea.stse':  pj('src','stse'), "":"src" }, 
 
     
     include_package_data = True,
