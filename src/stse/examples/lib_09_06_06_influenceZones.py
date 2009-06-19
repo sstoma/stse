@@ -21,7 +21,7 @@ __license__="Cecill-C"
 __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
-__svn_revision__= ""
+__svn_revision__= "13"
 
 
 import openalea.plantgl.all as pgl
