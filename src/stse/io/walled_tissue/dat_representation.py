@@ -119,7 +119,7 @@ def read_dat2walled_tissue(filename, tissue_properties=None, screen_coordinates=
         if len( cell2points[ i ] ) < 3:
             _cells_to_remove[ i ] = cell2points[ i ]
     for i in _cells_to_remove:
-        print " ! removing <3 point cell: ", ip
+        print " ! removing <3 point cell: ", i
         del cell2points[ i ]
     for i in _cells_to_remove:
         for j in _cells_to_remove[ i ]:

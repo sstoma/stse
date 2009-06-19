@@ -23,12 +23,13 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
-
+import copy
 import  openalea.plantgl.ext.all as pd
 import  openalea.plantgl.ext.color as color
 import  openalea.plantgl.all as pgl
 from ..structures.algo.walled_tissue import cell_center, wv_edge2cell_edge, calculate_cell_surface
-from ..tools.misc import segment, cast_to_0_1_segment 
+from ..tools.misc import segment, cast_to_0_1_segment
+from openalea.stse.visu.draw_cell_pgl import draw_cell
 
 
 
@@ -128,21 +129,77 @@ class WalledPolygonalCell(PolygonalCell):
             else:
                 self.walls[ wt.wv_edge_id( i ) ] = pd.AITriangle( points=[self.cell_center, l[0], l[1]], material= material_f( wt, material_range, cell ) )
 
+def f_cell_marking( properties, property_true_material=pgl.Material( (255, 255, 255) ), property_true_radius=0.1 ):
+    """Returns a funtion returning an pgl.shape with center in the centroid of
+    given cell if one of the properties evaluates to True.
 
-def f_property2material( property=None, property_material=pgl.Material((0,255,0)), normal_material=pgl.Material((0,0,0)) ):
-    def f( wt=None, cell=None, **keys):
-        if wt._cell2properties[cell].has_key(property):
-            if wt.cell_property( cell, property):
-                return property_material
-            else: return normal_material
-        else: return normal_material
+    :parameters:
+        wt : `WalledTissue`
+            Tissue storing cell data
+        cell : int
+            cell id 
+    :rtype: `openalea.plantgl.all.Shape`
+    :return: Material used to color the cell
+    """
+    def f( wt, cell ):
+        """<Short description of the function functionality.>
+        
+        :parameters:
+            wt : `WalledTissue`
+                Tissue storing cell data
+            cell : int
+                cell id 
+        :rtype: `openalea.plantgl.all.Shape` or None
+        :return: Shape centered in the centroid of the cell if one of the
+        properties was satisfied.
+        """
+        for property in properties:
+            if wt._cell2properties[ cell ].has_key( property ):
+                #print cell, property, wt.cell_property( cell, property )
+                if wt.cell_property( cell, property ):
+                    return pd.ASphere(pos=cell_center(wt, cell), material=property_true_material, radius=property_true_radius).shape
+        return None
+    return f    
+
+def f_properties2material( properties=None, property_material=pgl.Material((0,255,0)), normal_material=pgl.Material((0,0,0)) ):
+    """Returns a function returning a material 'property_material' if one of the
+    list items in 'properties' is evaluated as True for a given cell. 
+    
+    :parameters:
+        properties : [str]
+            list of properties
+        property_material : pgl.Material
+            material returned for cells for which one of property evaluates to
+            True
+        normal_material : pgl.Material
+            material returned for cells for which each properties evaluate to
+            False
+    :rtype: `openalea.plantgl.all.Material`
+    :return: Material used to color the cell
+    """
+    def f( wt=None, cell=None, **keys ):
+        """Returns a material for a given cell.
+        
+        :parameters:
+            wt : `WalledTissue`
+                Tissue storing cell data
+            cell : int
+                cell id 
+        :rtype: `openalea.plantgl.all.Material`
+        :return: Material used to color the cell
+        """
+        for property in properties:
+            if wt._cell2properties[ cell ].has_key( property ):
+                if wt.cell_property( cell, property ):
+                    return property_material
+        return normal_material
     return f
+
+
 
 weighted_property2material_green_range = color.GreenMap(outside_values=True)
 weighted_property2material_green_range._position_list=[0.,0.5,1.]
-def f_weighted_property2material( property=None, range=[0,1],
-                                 property_material=pgl.Material((0,255,0)),
-                                 normal_material=pgl.Material((0,0,0)) ):
+def f_weighted_property2material( property=None, range=[0,1] ):
     weighted_property2material_green_range.set_value_range(range)
     def f( wt=None, cell=None, **keys):
         if wt._cell2properties[cell].has_key(property):
@@ -152,15 +209,15 @@ def f_weighted_property2material( property=None, range=[0,1],
 
 
 def f_green_material( wt=None, cell=None, **keys ):
-    """Returns green material for every cell.
-    
-    <Long description of the function functionality.>
+    """Returns green material for each cell from tissue.
     
     :parameters:
-        arg1 : `T`
-            <Description of `arg1` meaning>
-    :rtype: `T`
-    :return: <Description of ``return_object`` meaning>
+        wt : WalledTissue
+            Tissue containing cell informations.
+        cell : int
+            Id of cell for which material is selected.
+    :rtype: pgl.Material
+    :return: Color prepared for a given cell.
     :raise Exception: <Description of situation raising `Exception`>
     """
     return pgl.Material((0,255,0))    
@@ -212,64 +269,59 @@ def f_property2scalar(wt_property_method=None,
 
     
     
-    
-def visualisation_pgl_2D_plain( wt, max_wall_absolute_thickness=0.15,
-                                    abs_intercellular_space=0., material_f=f_green_material,
-                                    revers=True,  wall_color=pgl.Color4(0,0,0,0),
-                                    pump_color=pgl.Color4(255,0,0,0),
-                                    stride=15,
-                                    **keys):
-    
-    from openalea.stse.visu.draw_cell_pgl import draw_cell
-    l=[]
-    for i in wt.cells():
-        # print " # displaying cell:", i
-        cell_corners=[wt.wv_pos(j) for j in wt.cell2wvs(i)]
-        wall_relative_thickness= [0 for i in wt.cell2wvs_edges(i)]
-        cell_color=material_f(wt=wt, cell=i)
-        cell_color=pgl.Color4(cell_color.ambient.red,cell_color.ambient.green,cell_color.ambient.blue,0)
-        if revers:
-            cell_corners.reverse()
-        l.append( draw_cell (cell_corners, wall_relative_thickness, abs_intercellular_space, abs_intercellular_space, cell_color, wall_color, pump_color, stride=stride, nb_ctrl_pts=3, sc=None))
-    for i in l: pd.get_scene().add(pgl.Shape(i,pgl.Material( (0,0,0) )))
-    return 0
-
 def visualisation_pgl_2D_varried_membrane_thickness( wt,
                                     max_wall_absolute_thickness=0.15,
                                     abs_intercellular_space=0.,
                                     abs_membrane_space=0.,
-                                    material_f=f_green_material,
+                                    f_material=f_green_material,
                                     revers=True,
                                     wall_color=pgl.Color4(0,0,0,0),
                                     pump_color=pgl.Color4(255,0,0,0),
                                     stride=15,
                                     f_membrane_thickness=None,
+                                    f_cell_marking=[],                                    
                                     **keys):
+    """Provides 2D tissue visualisation. 
     
-    from openalea.stse.visu.draw_cell_pgl import draw_cell
+    It allows to control each membrane thickness separatly (which is regulated by
+    the function working on a tuple (cell, wv_edge) and a color of each cell
+    (which is controlled by a function working on a cell).
     
+    :parameters:
+        arg1 : `T`
+            <Description of `arg1` meaning>
+    :rtype: `T`
+    :return: <Description of ``return_object`` meaning>
+    :raise Exception: <Description of situation raising `Exception`>
+    """    
+     
     l=[]
+    l2=[]
     for i in wt.cells():
-        # print " # displaying cell:", i
         cell_corners=[wt.wv_pos(j) for j in wt.cell2wvs(i)]
         if not f_membrane_thickness:
             wall_relative_thickness = [0 for i in wt.cell2wvs_edges(i)]
         else:
             wall_relative_thickness = []
-            for i in wt.cell2wvs_edges( i ):
-                try:
-                    v = f_membrane_thickness( wv_edge2cell_edge( wt, i ) )
-                except TypeError:
-                    v = f_membrane_thickness( -1 )
-                wall_relative_thickness.append( v )
+            for j in wt.cell2wvs_edges( i ):
+                wall_relative_thickness.append( f_membrane_thickness( i, j ) )
         
-        cell_color=material_f(wt=wt, cell=i)
+        cell_color=f_material(wt=wt, cell=i)
         cell_color=pgl.Color4(cell_color.ambient.red,cell_color.ambient.green,cell_color.ambient.blue,0)
         if revers:
             cell_corners.reverse()
+            wall_relative_thickness.reverse()
+            wall_relative_thickness = wall_relative_thickness[1:]+[wall_relative_thickness[0]]
+        #print i
         l.append( draw_cell (cell_corners, wall_relative_thickness, abs_intercellular_space, abs_intercellular_space+abs_membrane_space, cell_color, wall_color, pump_color, stride=stride, nb_ctrl_pts=3, sc=None))
+        for f in f_cell_marking:
+            k = f( wt, i)
+            if k:
+                l2.append( k )
+        
     for i in l: pd.get_scene().add(pgl.Shape(i,pgl.Material( (0,0,0) )))
-    return 0
+    for i in l2:
+        pd.get_scene().add( i )
 
 
     

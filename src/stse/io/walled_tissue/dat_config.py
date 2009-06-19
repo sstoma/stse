@@ -44,7 +44,7 @@ description=""
 
 # properties to set with tissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst
-const=TissueConst()
+const = WalledTissueConst()
 const.cell_properties ={}
 const.tissue_properties ={}
 const.cell_edge_properties={}
@@ -59,3 +59,6 @@ cell_properties = {}
 cell_edge_properties={}
 wv_properties={}
 wv_edge_properties={}
+
+# procedures run after tissue initialization, may do various editing stuff
+post_procedures = []
