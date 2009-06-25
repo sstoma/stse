@@ -24,6 +24,7 @@ __date__="04/2009"
 __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
+__svn_revision__= "5"
 
 from openalea.stse.structures.walled_tissue import WalledTissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst

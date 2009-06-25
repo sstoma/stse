@@ -199,12 +199,12 @@ def f_properties2material( properties=None, property_material=pgl.Material((0,25
 
 weighted_property2material_green_range = color.GreenMap(outside_values=True)
 weighted_property2material_green_range._position_list=[0.,0.5,1.]
-def f_weighted_property2material( property=None, range=[0,1] ):
-    weighted_property2material_green_range.set_value_range(range)
+def f_weighted_property2material( property=None, range=[0,1], default_color_range=weighted_property2material_green_range ):
+    default_color_range.set_value_range(range)
     def f( wt=None, cell=None, **keys):
         if wt._cell2properties[cell].has_key(property):
-            return pgl.Material( weighted_property2material_green_range.get_color( wt.cell_property(cell, property) ).i3tuple() )
-        else: return normal_material
+            return pgl.Material( default_color_range.get_color( wt.cell_property(cell, property) ).i3tuple() )
+        else: return pgl.Material( default_color_range.get_color( range[ 0 ] ).i3tuple() )
     return f
 
 
@@ -300,7 +300,7 @@ def visualisation_pgl_2D_varried_membrane_thickness( wt,
     for i in wt.cells():
         cell_corners=[wt.wv_pos(j) for j in wt.cell2wvs(i)]
         if not f_membrane_thickness:
-            wall_relative_thickness = [0 for i in wt.cell2wvs_edges(i)]
+            wall_relative_thickness = [0 for j in wt.cell2wvs_edges(i)]
         else:
             wall_relative_thickness = []
             for j in wt.cell2wvs_edges( i ):

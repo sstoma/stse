@@ -40,7 +40,7 @@ translation = True
 #cells to remove
 remove_cell_list = []
 # path to data
-file_folder = "/Users/stymek/src/stse/trunk/data/09-06-10-marianne-wt2"
+file_folder = "/Users/stymek/src/stse/trunk/data/09-06-10-marianne-wt2-diff"
 # .dat file name
 dat_file = "wt2.dat"
 #  .link file name
@@ -48,7 +48,7 @@ link_file = "wt2.link"
 # link description in properties
 link = "PIN"
 #tissue description
-description="Tissue of wildtype 01"
+description="Tissue of wildtype 02 used for diffusion"
 
 # cell regions
 CZ=[54,42,43,89,90,82,44,45,143,253,76,187]
@@ -68,7 +68,7 @@ regions2cells = {"CZ": CZ, "P0": P0, "P1": P1, "P2": P2, "P3": P3, "P4": P4, "P5
 # properties to set with tissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst
 const=WalledTissueConst()
-const.cell_properties = {}
+const.cell_properties = {"A":0}
 const.cell_properties.update( cell_regions )
 const.cell_properties.update( cell_iz )
 const.tissue_properties ={}
