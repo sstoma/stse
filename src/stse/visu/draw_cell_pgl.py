@@ -14,7 +14,8 @@
 
 """
 # Module documentation variables:
-__authors__="""Jerome Chopard    
+__authors__="""Jerome Chopard,
+Szymon Stoma    
 """
 __contact__=""
 __license__="Cecill-C"

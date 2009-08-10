@@ -262,7 +262,7 @@ class IntIdGenerator( object ):
         :return: Id of an object.
         """
         if not self._object2id.has_key( object ):
-            self._object2id[ object ] = copy.copy( self._current_id )
+            self._object2id[ object ] = self._current_id
             self._current_id += 1
             return self._current_id-1
         else:

@@ -62,3 +62,27 @@ def diameter(Points):
     diam,pair = max([((p[0]-q[0])**2 + (p[1]-q[1])**2, (p,q))
                      for p,q in rotatingCalipers(Points)])
     return pair
+
+
+def point_inside_polygon(point,poly):
+    """Determine if a point is inside a given polygon or not
+    Polygon is a list of (x,y) pairs.
+    """
+
+    n = len(poly)
+    inside =False
+    x = point[0]
+    y = point[1]
+    p1x,p1y,p1z = poly[0]
+    for i in range(n+1):
+        p2x,p2y,p2z = poly[i % n]
+        if y > min(p1y,p2y):
+            if y <= max(p1y,p2y):
+                if x <= max(p1x,p2x):
+                    if p1y != p2y:
+                        xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x,p1y = p2x,p2y
+
+    return inside
