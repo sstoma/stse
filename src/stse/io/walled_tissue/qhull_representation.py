@@ -98,11 +98,7 @@ def read_qhull2walled_tissue( voronoi_centers, voronoi_edges, tissue_properties=
     # we define the set of settings for a tissue
     if not tissue_properties:
         tissue_properties = WalledTissueConst( name = "Tissue01" )
-    #tissue_properties.tissue_properties[ "tissue_format" ] = "QHULL 1.0"
-    #tissue_properties.tissue_properties[ "outside_voronoi_centers" ] = []
-    #tissue_properties.cell_properties[ "was_inf" ] = False
-    #tissue_properties.cell_properties[ "voronoi_center"] = (0.,0.,0.)
-    #
+
     # we create a tissue
     wt = WalledTissue( const = tissue_properties )    
     wt.init_tissue_property( "outside_voronoi_centers", [])
@@ -115,7 +111,6 @@ def read_qhull2walled_tissue( voronoi_centers, voronoi_edges, tissue_properties=
     for i in inf_cells:
         wt.cell_property( i, "was_inf", True )
         if remove_infinite_cells:
-            #print "removing", i
             wt.remove_cell( i )
 
     if constraints:
@@ -125,12 +120,14 @@ def read_qhull2walled_tissue( voronoi_centers, voronoi_edges, tissue_properties=
         for i in wt.wvs():
             p = wt.wv_pos( i )
             # if the point wall point is outside the border rectangle
-            # defined by 
+            # defined by  constraint we mark this tissue
             if ( p[0] < c[0][0] or p[1] < c[0][1] ) or ( p[0] > c[1][0] or p[1] > c[1][1] ):
                 wv_outside.append( i )
         for i in wv_outside:
             cells_outside.extend( wt.wv2cells(i) )
+        # killing dupes
         cells_outside = dict(map(lambda a: (a,1), cells_outside)).keys()
+        # removing outside cells
         for i in cells_outside:
             wt.remove_cell( i )
     return wt

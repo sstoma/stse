@@ -145,9 +145,10 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """Inits wv_edge property for all wv_edgess, sets its value to value and
         ensures that all future wv_edges will be created with this property
         """
-        self.const.wv_edge_properties[ property ] = value
-        for i in self.wv_edges():
-            self.wv_edge_property( wv_edge=i, property=property, value=value )
+        if not self.const.wv_edge_properties.has_key( property ):
+            self.const.wv_edge_properties[ property ] = value
+            for i in self.wv_edges():
+                self.wv_edge_property( wv_edge=i, property=property, value=value )
             
     # END wv_edge properties
     
@@ -172,9 +173,10 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """Inits wv property for all wvs, sets its value to value and
         ensures that all future wvs will be created with this property
         """
-        self.const.wv_properties[ property ] = value
-        for i in self.wvss():
-            self.wv_property( wv=i, property=property, value=value )
+        if not self.const.wv_properties.has_key( property ):
+            self.const.wv_properties[ property ] = value
+            for i in self.wvss():
+                self.wv_property( wv=i, property=property, value=value )
             
     # END wv properties
     
@@ -203,9 +205,10 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """Inits cell property for all cells, sets its value to value and
         ensures that all future cells will be created with this property
         """
-        self.const.cell_properties[ property ] = value
-        for i in self.cells():
-            self.cell_property( cell=i, property=property, value=value )
+        if not self.const.cell_properties.has_key( property ):
+            self.const.cell_properties[ property ] = value
+            for i in self.cells():
+                self.cell_property( cell=i, property=property, value=value )
     # END cell properties
     
     # BEGIN tissue properties
@@ -232,8 +235,9 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """Inits cell property for all cells, sets its value to value and
         ensures that all future cells will be created with this property
         """
-        self.const.tissue_properties[ property ] = value
-        self.tissue_property( property=property, value=value )
+        if not self.const.tissue_properties.has_key( property ):    
+            self.const.tissue_properties[ property ] = value
+            self.tissue_property( property=property, value=value )
 
 
     # END tissue properties
@@ -276,9 +280,10 @@ class WalledTissue(walled_tissue_topology.TissueTopology):
         """Inits cell property for all cells, sets its value to value and
         ensures that all future cells will be created with this property
         """
-        self.const.cell_edge_properties[ property ] = value
-        for i in self.cell_edges():
-            self.cell_edge_property( cell_edge=i, property=property, value=value )
+        if not self.const.cell_edge_properties.has_key( property ):
+            self.const.cell_edge_properties[ property ] = value
+            for i in self.cell_edges():
+                self.cell_edge_property( cell_edge=i, property=property, value=value )
 
     
     # END cell edge properties

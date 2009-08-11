@@ -369,16 +369,23 @@ def read_walled_tissue( file_name=None, const=None ):
                 for i in wtpr.tissue.scale_relations[1]:
                     wt.wv_edge_property( wv_edge=tuple(wtpr.tissue.scale_relations[1][i]), property=j, value=wtpr.wv_edge_properties[ j ][ i ] )
         
+        #print wt.const.tissue_properties, wtpr.tissue_properties
         for i in wt.const.tissue_properties.keys():
-                print wt.const.tissue_properties, wtpr.tissue_properties
                 wt.tissue_property( i, wtpr.tissue_properties[ i ] )
         
         return wt
 
 class WalledTissuePickleWriter ( TissuePickleWriter ):
-	def __init__ (self, tissuename, mode="w", tissue=IOTissue(), tissue_properties={},
-		      cell_properties={}, wv_properties={}, cell_edge_properties={},
-		      wv_edge_properties={}, description=None, const=WalledTissueConst() ) :
+	def __init__ (self, tissuename, mode="w",
+                    tissue=IOTissue(),
+                    const=IOTissueProperty(-2),
+                    tissue_properties=IOTissueProperty(-1),
+		    cell_properties=IOTissueProperty(0),
+                    wv_edge_properties=IOTissueProperty(1),
+                    wv_properties=IOTissueProperty(2),
+                    cell_edge_properties=IOTissueProperty(3),
+		    description='',
+                ):
 		"""
 		try to create a tissuefile
 		for writing 'w'
@@ -651,12 +658,11 @@ def WalledTissue2IOTissueProperties( wt=None ):
 	:return: <Description of ``return_object`` meaning>
 	:raise Exception: <Description of situation raising `Exception`>
 	"""
-	for i in wt.const.tissue_properties.keys(): 
+	r = IOTissueProperty(-1)
+        r.description =  "Tissue properties"
+        for i in wt.const.tissue_properties.keys(): 
 		if wt.has_tissue_property( property=i ):
-			r = IOTissueProperty(-1)
-			r.description =  i
 			r[ i  ] = wt.tissue_property( property=i )
-        		
 	return r
 
 def WalledTissue2ConstProperties( wt=None ):

@@ -23,6 +23,7 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 
 from enthought.tvtk.api import tvtk
+from enthought.traits.trait_errors import TraitError
 from numpy import array, infty
 import math
 
@@ -58,18 +59,12 @@ def walled_tissue2vtkPolyData( wt=None ):
         cell_id_wt2vtk[ i ] = id
         cell_id_vtk2wt[ id ] = i
     
-    cell_id = []
-    for i  in range(max(cell_id_vtk2wt.keys())):
-        cell_id.append( cell_id_vtk2wt[ i ] ) 
-    
-    #, lines=cells
+
     tissue = tvtk.PolyData(points=wvs, polys=cells)
-    #print cell_id_vtk2wt.keys(), array( cell_id, 'f' )
-    #tissue.cell_data.scalars = array( cell_id, 'f' )
-    return tissue
+    return tissue, cell_id_vtk2wt, cell_id_wt2vtk
 
 
-def update_wt_from_points( wt, point_list ):
+def synchronize_id_of_wt_and_voronoi( wt, point_list ):
     """Updates the properties of walled_tissue based on
     voronoi points. 
     
@@ -77,7 +72,7 @@ def update_wt_from_points( wt, point_list ):
     1. for each cell in wt calculates its centroid.
     2. for each centroid we assign the nearest point from points.
     3. for each pair we test if the assigned point is inside of the
-    polygon corresponding to the centroid. If yes, we copy the properties.
+    polygon corresponding to the centroid. If yes, we synchronize id.
     
     :parameters:
         wt : WalledTissue
@@ -119,7 +114,6 @@ def update_wt_from_points( wt, point_list ):
         return l
     # preparation
     cc = cell_centers( wt )
-    #cc_tmp = cc.copy()
     point_list_tmp = list( point_list ) 
     cc2cell = {}
     for i in cc:
@@ -146,12 +140,48 @@ def update_wt_from_points( wt, point_list ):
     for i in point_inside:
         if point_inside[ i ]:
             cid = cc2cell[ nearest_point2centroid[ i ] ]
-            wt.cell_property(cid, "cell_type", i.cell_type)
-            wt.cell_property(cid, "custom_cell_type1", i.custom_cell_type1)
-            wt.cell_property(cid, "custom_cell_type2", i.custom_cell_type2)
-            wt.cell_property(cid, "custom_cell_type3", i.custom_cell_type3)
-            wt.cell_property(cid, "custom_cell_type4", i.custom_cell_type4)
             i.cell_id = cid
         else:
             print " !: possible problem, closest point outside cell"
+
+def copy_cell_properties_from_wt_to_voronoi( wt, voronoi, properties ):
+    """Copies cell properties from WalledTissue to voronoi structure.
+    
+    :parameters:
+        wt : `WalledTissue`
+            Source of properties.
+        voronoi : []
+            Target of properties.
+        properties : {}
+            Properties to be synchronize.
+    """
+    for i in properties:
+        try:
+            for j in voronoi:
+                if j.cell_id != -1:
+                    j.__setattr__( i, wt.cell_property(j.cell_id, i) )
+        except TraitError:
+            print " !: problem while synchronising wt->voronoi:", i
             
+            
+def copy_cell_properties_from_voronoi_to_wt( wt, voronoi, properties, \
+    init_properties=True ):
+    """Copies cell properties from  voronoi to WalledTissue structure.
+    
+    :parameters:
+        wt : `WalledTissue`
+            Source of properties.
+        voronoi : []
+            Target of properties.
+        properties : {}
+            Properties to be synchronized.
+    """
+    for i in properties:
+        if init_properties:
+            wt.init_cell_property(i, properties[ i ])
+        try:
+            for j in voronoi:
+                if j.cell_id != -1:
+                    wt.cell_property(j.cell_id, i, j.__getattribute__( i ) )                
+        except AttributeError:
+            print " !: problem while synchronising voronoi->wt:", i
