@@ -1,4 +1,30 @@
 #!/usr/bin/env python
+"""Comprtment viewer.
+
+<Long description of the module functionality.>
+
+:todo:
+    Nothing.
+
+:bug:
+    None known.
+    
+:organization:
+    INRIA
+
+"""
+# Module documentation variables:
+__authors__="""Szymon Stoma    
+"""
+__contact__="<Your contact>"
+__license__="Cecill-C"
+__date__="Thu Aug 13 11:45:26 CEST 2009"
+__version__="0.1"
+__docformat__= "restructuredtext en"
+
+
+
+#!/usr/bin/env python
 """Application allowing for 2D tissue digitalization.
 
 :todo:
@@ -51,6 +77,9 @@ from vtk.util import colors
 
 from numpy import array, zeros
 
+import os
+import os.path
+
 # openalea
 from openalea.stse.io.walled_tissue.vtk_representation import \
     walled_tissue2vtkPolyData, synchronize_id_of_wt_and_voronoi, \
@@ -61,102 +90,13 @@ from openalea.stse.io.walled_tissue.native_representation import \
 from openalea.stse.io.qhull import voronoi_centers_to_edges 
 from openalea.stse.io.walled_tissue.qhull_representation import \
     read_qhull2walled_tissue
-from openalea.stse.tools.emergency import kill_close_points
+from openalea.stse.gui.compartment_editor import  VoronoiCenterVisRep, \
+    default_voronoi_factory
 
 
 # ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
+    
 
-
-class VoronoiCenterVisRep(tvtk.Actor):
-    """Represents the cell center of a cell.
-    """
-    cell_id = Int(-1)
-    voronoi_center = Any
-    was_inf = Bool(False)
-    
-    def __init__(self, center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
-        """ Creates a sphere and returns the actor. """
-        super(VoronoiCenterVisRep, self).__init__( **kwargs )
-        source = tvtk.SphereSource(center=center, radius=radius,
-                                   theta_resolution=resolution,
-                                   phi_resolution=resolution)
-        self.mapper = tvtk.PolyDataMapper(input=source.output)
-        self.property = tvtk.Property(opacity=opacity, color=color)
-    
-    def default_traits_view( self ):    
-        view = View(
-            Item("cell_id", style='readonly'),
-        )
-        return view
-    
-    @on_trait_change('cell_id')
-    def change_cell_id(self):
-        pass
-    
-def default_voronoi_factory( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0,):
-    """Used to generate voronoi centers.
-    """
-    return VoronoiCenterVisRep( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity )
-    
-class VoronoiCenterVisRep1(VoronoiCenterVisRep):
-    """Represents the cell center of a cell.
-    """
-    cell_center_color = Color()
-    cell_type = Enum("outside","cytoplasm","membrane","kernel")
-    custom_cell_type1 = Int(0)
-    custom_cell_type2 = Int(0)
-    custom_cell_type3 = Int(0)
-    custom_cell_type4 = Int(0)
-    aqp2 = Range(0,1.)
-
-    
-    def __init__(self, center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
-        """ Creates a sphere and returns the actor. """
-        super(VoronoiCenterVisRep1, self).__init__( **kwargs )
-        source = tvtk.SphereSource(center=center, radius=radius,
-                                   theta_resolution=resolution,
-                                   phi_resolution=resolution)
-        self.mapper = tvtk.PolyDataMapper(input=source.output)
-        self.property = tvtk.Property(opacity=opacity, color=color)
-        self.voronoi_center=array(3)
-    
-    def default_traits_view( self ):    
-        view = View(
-            Item("cell_id", style='readonly'),
-            #Item("voronoi_center", style='readonly'),
-            #Item("was_inf", style='readonly'),
-            Item("cell_type",style='simple'),
-            Item("aqp2"),
-            Item("custom_cell_type1",style='simple'),
-            #Item("custom_cell_type2",style='simple'),
-            #Item("custom_cell_type3",style='simple'),
-            #Item("custom_cell_type4",style='simple'),
-        )
-        return view
-    
-    @on_trait_change('cell_type')
-    def change_cell_center_color(self):
-        c = self.cell_center_color
-        if self.cell_type == "cytoplasm":
-            self.property.color = colors.blue
-        elif self.cell_type == "membrane":
-            self.property.color = colors.red
-        elif self.cell_type == "outside":
-            self.property.color = colors.white
-        elif self.cell_type == "kernel":
-            self.property.color = colors.black    
-
-def voronoi_factory_aqp1( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0,):
-    """Used to generate voronoi centers.
-    """
-    return VoronoiCenterVisRep1( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity )
-    
 # ---------------------------------------------------- CUSTOMIZATION GUI CLASSES
 
     
@@ -184,124 +124,40 @@ class MyAction(Action):
 # ---------------------------------------------------------------------- ACTIONS
 
         
-class ActionsAddRandomVoronoiCenters(MyAction):
+class FileLoadWalledTissueSerie(MyAction):
     def perform(self):
-        """
-        Adds random voronoi centers.
-        """
+        """Pops up a dialog used to load WalledTissue series"""
         a = self._application
-        p=[]
-        (xmin,ymin) = a.voronoi_centers_limit_left_bottom_position
-        (xmax,ymax) = a.voronoi_centers_limit_right_top_position
-        x_range = xmax-xmin
-        y_range = ymax-ymin
-        for i in range( a.voronoi_centers_add_number ):
-            p.append( (xmin+x_range*random.random(), ymin+y_range*random.random(), 0.) )
-        a.add_voronoi_centers( pos_list=p, render_scene=False )    
-        a.scene_model.render()
-   
+        extns = ['*']
+        dlg = DirectoryDialog( action='open',
+                wildcard='|'.join(extns), title="Load WalledTissue serie")
         
-class ActionsAddGridVoronoiCenters(MyAction):
-    def perform(self):
-        a = self._application
-        p=[]
-        (xmin,ymin) = a.voronoi_centers_limit_left_bottom_position
-        (xmax,ymax) = a.voronoi_centers_limit_right_top_position
-        x_range = xmax-xmin
-        y_range = ymax-ymin
-        area = x_range*y_range
-        small_area = area/ float(a.voronoi_centers_add_number)
-        delta = math.sqrt( small_area )
-        x_nbr = int(x_range / delta)
-        y_nbr = int(y_range / delta)
-        for i in range( x_nbr ):
-            for j in range( y_nbr ):
-                p.append( ( (j%2)*delta/2.+xmin+(delta/2.)+i*delta, (ymin+(delta/2.)+j*delta), 0. ) )
-        a.add_voronoi_centers( pos_list=p, render_scene=False )    
-        a.scene_model.render()
-        
-class ActionsAddMembrane(MyAction):
-    p1 = Array(Float, (2,1) )
-    p2 = Array(Float, (2,1) )
-    number_of_points = Int(10)
-    thickness = Float(10.)
-    click_counter = Int(0)
-    inside_type = Str('outside_membrane')
-    outside_type = Str('cytoplasm')
-    
-    def default_traits_view( self ):
-        """Description of default view.
-        """
-        view = View(
-            VGroup(
-                Item(
-                    "p1",
-                    label="Start point",
-                    style="readonly",
-                ),
-                Item(
-                    "p2",
-                    label="End point",
-                    style="readonly",
-                ),
-                Item(
-                    "number_of_points",
-                    label="# points",
-                ),
-                Item(
-                    "thickness",
-                    label="membrane thickness",
-                    # Number of voronoi centers to add
-                ),
-                Item(
-                    "inside_type",
-                    label="inside cell type",
-                    # Number of voronoi centers to add
-                ),
-                Item(
-                    "outside_type",
-                    label="outside cell type",
-                    # Number of voronoi centers to add
-                ),
-                show_border = True,
-                label = 'Add membrane',
-            ),
-        )
-        return view
-    
-    def set_point( self, point ):
-        if self.click_counter == 0:
-            self.p1[0] = point[0]
-            self.p1[1] = point[1]
-            self.click_counter = 1
-            self.trait_property_changed('p1', self.p1)
-        else:
-            self.p2[0] = point[0]
-            self.p2[1] = point[1]
-            self.click_counter = 0
-            self.trait_property_changed('p2', self.p1)
-    
-    
-    def perform(self):
-        a = self._application
-        op=[]
-        ip=[]
-        dir_x = self.p2[0] - self.p1[0]
-        dir_y = self.p2[1] - self.p1[1]
-        norm_per = math.sqrt( dir_x*dir_x+dir_y*dir_y)
-        per_x = -dir_y / norm_per * self.thickness / 2.
-        per_y = dir_x / norm_per * self.thickness / 2.
-        
-        n = float(self.number_of_points)
-        for i in range( self.number_of_points ):
-            for j in [-1, 1]:
-                op.append( ( float(self.p1[0]+i*dir_x/n+j*per_x), float(self.p1[1]+i*dir_y/n+j*per_y), 0.))
-            ip.append( ( float(self.p1[0]+i*dir_x/n), float(self.p1[1]+i*dir_y/n), 0.))
-        a.add_voronoi_centers( pos_list=ip, render_scene=False, cell_type=self.inside_type )    
-        a.add_voronoi_centers( pos_list=op, render_scene=False, cell_type=self.outside_type )    
-        a.scene_model.render()
-        
+        if dlg.open() == OK:
+            dirname = dlg.path
+            for i in [f for f in os.listdir(dirname) if os.path.isdir(os.path.join(dirname, f))]:
+                print " #: loading ", i
+                a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
+                a._voronoi_wt = read_walled_tissue( file_name=os.path.join(dirname, i) )        
 
+                #pos_list = []
+                #for i in a._voronoi_wt.cells():
+                #    pos_list.append( a._voronoi_wt.cell_property(i, "voronoi_center" ) )
+                #for i in a._voronoi_wt.tissue_property("outside_voronoi_centers"):
+                #    pos_list.append( i )
+                #
+                #a.add_voronoi_centers( pos_list=pos_list, render_scene=False, \
+                #    update_vtk_from_voronoi=False )
+                #
+                ##updates the properties of voronoi centers with WalledTissue properties 
+                #
+                #synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
+                #copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
+                #    a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
+                #
+                a.update_vtk_from_voronoi()
+
+                a.display_tissue_scalar_properties(property=a._cell_scalars_active_name)
+                a.scene_model.save_png(os.path.join(dirname, str(i)+".png") )            
 
 class ActionsUpdateVoronoiEdges(MyAction):
     """ Produces and displays the voronoi edges. """
@@ -324,30 +180,8 @@ class FileLoadBackgroundImage(MyAction):
             image_reader = engine.open( dlg.path )
             a._bg_image = ImageActor()
             engine.add_filter(a._bg_image, image_reader)
-            (x1,x2) = a._bg_image.actor.x_range
-            (y1,y2) = a._bg_image.actor.y_range
-            a.voronoi_centers_limit_left_bottom_position = (x1,y1)
-            a.voronoi_centers_limit_right_top_position = (x2,y2)
 
-class ActionsCleanVoronoi(MyAction):
-    distance = Float(0.1)
-    def perform(self):
-        """Kills voronoi centers too close to each other."""
-        a = self._application
-        kill_close_points(a._voronoi_center_list, self.distance )
 
-    def default_traits_view( self ):
-        """Description of default view.
-        """
-        view = \
-        View(
-            VGroup(
-                Item(
-                    "distance",
-                )
-            )
-        )
-        return view       
 
 class FileSaveWalledTissue(MyAction):
     def perform(self):
@@ -359,23 +193,6 @@ class FileSaveWalledTissue(MyAction):
         
         if dlg.open() == OK:
             t = a._voronoi_wt
-            
-            # kill double voronoi
-            kill_close_points(a._voronoi_center_list, 0.1)
-            
-            #updates the WalledTissue properties with voronoi centers
-            synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-            copy_cell_properties_from_voronoi_to_wt( a._voronoi_wt, \
-                a._voronoi_center_list, a.cell_properties )
-            
-            ovc = []
-            for i in a._voronoi_center_list:
-                if i.cell_id != -1 :
-                    t.cell_property( i.cell_id, "voronoi_center", i.position)
-                else:
-                    ovc.append(i.position)
-            t.tissue_property( "outside_voronoi_centers", ovc )
-            
             saved_tissue = write_walled_tissue( tissue=a._voronoi_wt, name=dlg.path, desc="Test tissue" )
 
 
@@ -413,7 +230,7 @@ class FileLoadWalledTissue(MyAction):
 # ------------------------------------------------------------------ APPLICATION
 
                 
-class ExampleWindow( HasTraits ):
+class CompartmentViewerWindow( HasTraits ):
     """
 <h1>Interactions</h1>
 <h2>Specific interactions:</h2>
@@ -460,10 +277,6 @@ These interactions are redefined for this application:
     ## controls    
     # size of voronoi cell centers
     voronoi_center_size = Range(1,10.,0.1)
-    # 
-    voronoi_centers_limit_left_bottom_position = Tuple(0., 0.)
-    voronoi_centers_limit_right_top_position = Tuple(100., 100.)
-    voronoi_centers_add_number = Int(100)
     ## displayed application internals 
     _help = HTML(__doc__)    
     scene_model = Instance( MlabSceneModel, () )
@@ -477,10 +290,9 @@ These interactions are redefined for this application:
     _voronoi_vtk_ds = Instance( VTKDataSource, ())
     _cell_scalars_active = Bool(False)
     _cell_scalars_active_name = Str()
-    
-    ##actions
-    actions_add_membrane = Instance( ActionsAddMembrane, () )
-    actions_clean_voronoi = Instance( ActionsCleanVoronoi, () )
+    _cell_scalars_range = Array(Float, (2,1) )
+
+
     
     def default_traits_view( self ):
         """Description of default view.
@@ -488,13 +300,7 @@ These interactions are redefined for this application:
         self.actions = {}
         # defining menu/toolbar positions
         # note: they can be shared
-        action_add_random_voronoi_centers = ActionsAddRandomVoronoiCenters(
-                parent=self,
-                name = "Add random centers",
-                action = "self.perform",
-                toolip = "Adds randomly placed voronoi centers to the current scene",
-                )
-        self.actions["action_add_random_voronoi_centers"] =action_add_random_voronoi_centers
+
         
         file_load_background_image = FileLoadBackgroundImage(
                 parent=self,
@@ -503,23 +309,7 @@ These interactions are redefined for this application:
                 action = "self.perform",
         )
         self.actions["file_load_background_image"] =file_load_background_image
-        
-        actions_update_voronoi_edges = ActionsUpdateVoronoiEdges(
-            parent=self,
-            name = "Update edges",
-            toolip = "Updates voronoi edges", 
-            action = "self.perform",
-        )
-        self.actions["actions_update_voronoi_edges"] =actions_update_voronoi_edges
-        
-        self.actions_add_membrane = ActionsAddMembrane(
-            parent=self,
-            name = "Add membrane",
-            toolip = "Adds voronoi centers creating thin membrane between points", 
-            action = "self.perform",
-        )
-        self.actions["actions_add_membrane"] =self.actions_add_membrane
-        
+                
         file_load_walled_tissue = FileLoadWalledTissue(
             parent=self,
             name = "Load WalledTissue",
@@ -536,31 +326,14 @@ These interactions are redefined for this application:
         )
         self.actions["file_save_walled_tissue"] =file_save_walled_tissue
         
-        file_load_walled_tissue = FileLoadWalledTissue(
+        file_load_walled_tissue_serie = FileLoadWalledTissueSerie(
             parent=self,
-            name = "Load WalledTissue",
-            toolip = "Loads WalledTissue", 
+            name = "Load WalledTissue serie",
+            toolip = "Loads a serie of walled tissue simulations", 
             action = "self.perform",
         )
-        self.actions["file_load_walled_tissue"] =file_load_walled_tissue
-        
-        actions_add_grid_voronoi_centers = ActionsAddGridVoronoiCenters(
-            parent=self,
-            name = "Add grid centers",
-            toolip = "Adds voronoi centers distributed on grid", 
-            action = "self.perform",
-        )
-        self.actions["actions_add_grid_voronoi_centers"] =actions_add_grid_voronoi_centers
-        
-        self.actions_clean_voronoi = ActionsCleanVoronoi(
-            parent=self,
-            name = "Removes voronoi placed too close to each other",
-            toolip = "Removes voronoi closer than given distance to each other", 
-            action = "self.perform",
-        )
-        self.actions["actions_clean_voronoi"] = self.actions_clean_voronoi
-        
-        
+        self.actions["file_load_walled_tissue_serie"] =file_load_walled_tissue_serie
+                        
         # specifying the view
         view = View(
             # specifying the layout of the window,
@@ -579,42 +352,10 @@ These interactions are redefined for this application:
                 ),
                 Tabbed(
                     VGroup(
-                        VGroup(
-                            Item(
-                                "voronoi_centers_limit_left_bottom_position",
-                                label="Left bottom",
-                            ),
-                            Item(
-                                "voronoi_centers_limit_right_top_position",
-                                label="Right top",
-                            ),
-                            Item(
-                                "voronoi_centers_add_number",
-                                label="# centers",
-                                # Number of voronoi centers to add
-                            ),
-                            show_border = True,
-                            label = 'Add Voronoi centers',
-                        ),
-                        Item(
-                            'actions_add_membrane',
-                            style='custom',
-                            label='',
-                            show_label=False,
-                        ),
-                        Item(
-                            'actions_clean_voronoi',
-                            style='custom',
-                            label='',
-                            show_label=False,
-                        ),
-                        show_border = True,
-                        label = 'Actions',
-                    ),
-                    VGroup(
                         "voronoi_center_size",
                         "_cell_scalars_active",
                         "_cell_scalars_active_name",
+                        "_cell_scalars_range",
                         show_border = True,
                         label = 'Visualisation',
                     ),
@@ -654,22 +395,17 @@ These interactions are redefined for this application:
                     file_load_background_image,
                     file_save_walled_tissue,
                     file_load_walled_tissue,
+                    file_load_walled_tissue_serie,
                     name = '&File',
                 ),
                 MenuManager(
-                    action_add_random_voronoi_centers,
-                    actions_update_voronoi_edges,
-                    actions_add_grid_voronoi_centers,
-                    self.actions_add_membrane,
-                    self.actions_clean_voronoi,
                     name = '&Actions',
                 ),
             ),
             ## defining toolbar content
-            toolbar= ToolBarManager(
-                file_load_background_image,
-                actions_add_grid_voronoi_centers,
-            ),
+            #toolbar= ToolBarManager(
+            #    file_load_background_image,
+            #),
         )
         return view
 
@@ -694,14 +430,8 @@ These interactions are redefined for this application:
             self.select_voronoi_center( self._voronoi_center_list[0] )
             self._bw.scale = False
             self._bw.place_widget()
-
-        def callback_end(widget, event):
-            """This callback sets the """
-            if self._bw.prop3d:
-                self._bw.prop3d.position = self._bw.center
-                self.update_vtk_from_voronoi( render_scene=True )                   
-        self._bw.add_observer("EndInteractionEvent", callback_end)
         self._bw.on()
+        self._bw.translation = 0
         
         # switching the spheres using picker - key 'p'
         def rmc2_callback(widget, event):
@@ -711,62 +441,6 @@ These interactions are redefined for this application:
         self.scene_model.picker.pointpicker.add_observer("PickEvent", rmc2_callback)
         self.scene_model.picker.show_gui = False
         
-        # region picking 'b'
-        def pick_voronoi_region_callback(widget, event):
-            """Alternative right mouse click callback"""
-            if widget.GetKeyCode() == 'b':
-                pos = widget.GetEventPosition()
-                self.d = self.scene_model.picker.pick_cell(pos[ 0 ], pos[ 1 ])
-                #print " #: updated d..", self.d.cell_id
-        self.scene_model.interactor.add_observer("KeyPressEvent", pick_voronoi_region_callback)
- 
-        # adding a sphere using key interaction - key 'z'
-        def add_actor_callback(widget, event):
-            """Alternative right mouse click callback"""
-            if widget.GetKeyCode() == 'z':
-                pos = widget.GetEventPosition()
-                d = self.scene_model.picker.pick_point(pos[ 0 ], pos[ 1 ])
-                self.select_voronoi_center( self.add_voronoi_center(pos=(d.coordinate[ 0 ], d.coordinate[ 1 ], 0.) ) )
-                #self.event_w = widget
-        self.scene_model.interactor.add_observer("KeyPressEvent", add_actor_callback)
-
-        # adding a sphere using key interaction - key 'x'
-        def remove_voronoi_center_callback(widget, event):
-            """Removes selected voronoi center"""
-            if widget.GetKeyCode() == 'x':
-                if self._selected_voronoi_center:
-                    self.remove_voronoi_center( self._selected_voronoi_center )
-                    if self._voronoi_center_list:
-                        self.select_voronoi_center( self._voronoi_center_list[ 0 ] )
-        self.scene_model.interactor.add_observer("KeyPressEvent", remove_voronoi_center_callback)
-
-        # removing all voronoi centers - key 'c'
-        def remove_all_voronoi_centers_callback(widget, event):
-            """Removes selected voronoi center"""
-            if widget.GetKeyCode() == 'c':
-                self.remove_all_voronoi_centers()
-        self.scene_model.interactor.add_observer("KeyPressEvent", \
-            remove_all_voronoi_centers_callback)
-
-        # adding an membrane end - key 'm'
-        def membrane_callback(widget, event):
-            """Alternative right mouse click callback"""
-            if widget.GetKeyCode() == 'm':
-                pos = widget.GetEventPosition()
-                d = self.scene_model.picker.pick_point(pos[ 0 ], pos[ 1 ])
-                self.actions["actions_add_membrane"].set_point( d.coordinate )
-                #self.event_w = widget
-        self.scene_model.interactor.add_observer("KeyPressEvent", membrane_callback)
-
-        # adding an membrane end - key 'm'
-        self.default_cell_type = "outside"
-        def custom_callback(widget, event):
-            """Changing cell type to self.default_cell_type"""
-            if widget.GetKeyCode() == 'n':
-                rmc2_callback( widget, event )
-                self._selected_voronoi_center.cell_type = self.default_cell_type
-        self.scene_model.interactor.add_observer("KeyPressEvent", custom_callback)
-
         # comment it if you would like "normal" 3d interactor instead of the one
         # described in __doc__
         self.scene_model.interactor.interactor_style = \
@@ -774,8 +448,9 @@ These interactions are redefined for this application:
         
         self.scene_model.parallel_projection=True
         
-        
         self._voronoi_vtk_ds = None
+        
+        self.scene_model.anti_aliasing_frames = 0
 
 
     @on_trait_change('voronoi_center_size')
@@ -789,7 +464,6 @@ These interactions are redefined for this application:
     def remove_all_voronoi_centers( self, update_vtk_from_voronoi=False ):
         self.remove_voronoi_centers( self._voronoi_center_list, update_vtk_from_voronoi=False )
         self.select_voronoi_center( None )
-        #self.update_vtk_from_voronoi( render_scene= render_scene)
 
     
     def add_voronoi_center( self, pos=(0,0,0), render_scene=True, update_vtk_from_voronoi=True ):
@@ -803,11 +477,10 @@ These interactions are redefined for this application:
         return s
 
 
-    def add_voronoi_centers( self, pos_list=[], render_scene=True, \
-        update_vtk_from_voronoi=True, **kwargs ):
+    def add_voronoi_centers( self, pos_list=[], render_scene=True, update_vtk_from_voronoi=True ):
         t = []
         for i in pos_list:
-            s = self.voronoi_factory(resolution=4, radius=1., **kwargs )
+            s = self.voronoi_factory(resolution=4, radius=1. )
             s.scale=array([self.voronoi_center_size,self.voronoi_center_size, \
                 self.voronoi_center_size])
             s.position = i
@@ -847,20 +520,16 @@ These interactions are redefined for this application:
         
     def update_vtk_from_voronoi( self, render_scene = True ):
         # TODO
-        if len( self._voronoi_center_list ) > 4:
-            (i,o) = voronoi_centers_to_edges( self.voronoi_centers() )
-            c1 = self.voronoi_centers_limit_left_bottom_position 
-            c2 = self.voronoi_centers_limit_right_top_position
-            self._voronoi_wt = read_qhull2walled_tissue(i, o, remove_infinite_cells=True, constraints=(c1, c2) )
-            self._voronoi_vtk, self._cell_id_vtk2wt, self._cell_id_wt2vtk = \
-                walled_tissue2vtkPolyData( self._voronoi_wt )
-  
+
+        self._voronoi_vtk, self._cell_id_vtk2wt, self._cell_id_wt2vtk = \
+            walled_tissue2vtkPolyData( self._voronoi_wt )
+            
         if not self._voronoi_vtk_ds:
             self._voronoi_vtk_ds = VTKDataSource(data=self._voronoi_vtk)
             engine = mlab.get_engine()
             engine.add_source( self._voronoi_vtk_ds ) 
-            mlab.pipeline.surface(self._voronoi_vtk_ds, opacity=0.05)
-            mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds),
+            self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity=0.05)
+            self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds),
                                     color=(0, 0, 0), )
         else:
             self._voronoi_vtk_ds.data = self._voronoi_vtk
@@ -870,13 +539,9 @@ These interactions are redefined for this application:
             if self._cell_scalars_active_name in self.cell_properties.keys():
                 self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False )
         if render_scene: self.scene_model.render()
-    
+            
+            
     def display_tissue_scalar_properties( self, property, render_scene=True ):
-        #updates the WalledTissue properties with voronoi centers
-        synchronize_id_of_wt_and_voronoi(self._voronoi_wt, self._voronoi_center_list)
-        copy_cell_properties_from_voronoi_to_wt( self._voronoi_wt, \
-            self._voronoi_center_list, self.cell_properties )
-    
         t = self._voronoi_wt
         cell_nbr = len( t.cells() )
         prop_value = zeros( cell_nbr )
@@ -886,34 +551,33 @@ These interactions are redefined for this application:
         self._voronoi_vtk.cell_data.scalars = prop_value
         self._voronoi_vtk.cell_data.scalars.name = property
         
+        #engine.mlab.get_engine()
+        #module_manager = engine.scenes[0].children[0].children[0]
+        self._voronoi_cell_polygons.parent.scalar_lut_manager.use_default_range = False
+        self._voronoi_cell_polygons.parent.scalar_lut_manager.data_range = \
+            array( \
+                [ float( self._cell_scalars_range[ 0 ]), \
+                float( self._cell_scalars_range[ 1 ]) ] \
+            )
         if render_scene: self._voronoi_vtk_ds.update()
         
     def __init__( self, voronoi_factory=default_voronoi_factory, cell_properties={} ):
-        super(ExampleWindow, self).__init__()
+        super(CompartmentViewerWindow, self).__init__()
         self.voronoi_factory = voronoi_factory
         self.cell_properties = cell_properties
         self._voronoi_cell_scalars = None
         
 
 
-def mesh_editing():
-    return ExampleWindow()
+def mesh_viewing():
+    return CompartmentViewerWindow()
 
-def aqp_editing():
-    cell_properties = {
-        'custom_cell_type1': 1,
-        'cell_type': 'outside',
-        'aqp2': 0.,
-    }
-    return ExampleWindow( voronoi_factory=voronoi_factory_aqp1, \
-        cell_properties=cell_properties)
 
 if __name__ == '__main__':
     # Create and open an application window.
-    window = mesh_editing()
-    #window = aqp_editing()
+    window = mesh_viewing()
     window.edit_traits()
     window.do()
     GUI().start_event_loop()
-
+    
         

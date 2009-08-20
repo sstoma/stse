@@ -33,6 +33,7 @@ import copy
 from ..tools.misc import find_edge_order, find_edges_order
 import openalea.plantgl.all as pgl
 from  algo.walled_tissue_topology import create_shapes_for_new_cells
+from networkx import single_source_shortest_path
 
 ## BEGIN pickle visual vectors
 #import visual
@@ -217,14 +218,14 @@ class TissueTopology:
             smaller_than : bool
                 if True the cells which are <= are returned insted of = (default=False) 
         """
-        l = nx.bfs_length( self._cells, cell )
+        l = single_source_shortest_path( self._cells, cell, distance+1 )
         result = []
         for i in l.keys():
             if smaller_than:
-                if l[ i ] <= distance:
+                if len( l[ i ] ) <= distance:
                     result.append( i )
             else:                
-                if l[ i ] == distance:
+                if len(l[ i ] ) == distance:
                     result.append( i )
         return result
     

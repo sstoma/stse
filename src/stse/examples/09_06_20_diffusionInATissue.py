@@ -75,7 +75,7 @@ class DiffusionAction:
         while not stable and i < self.c_max_steps:
             print " #: physiology A diffusion: loop=", i, " time=",self.t
             i+=1
-            res= scipy.integrate.odepack.odeint( self.f, self.prepare_x0(), [self.t, self.t+self.h],rtol=0.01, atol=0.001 )
+            res= scipy.integrate.odepack.odeint( self.f, self.prepare_x0(), [self.t, self.t+self.h],rtol=0.01, atol=0.001, full_output = 1 )
             self.t += self.h                
             stable = self.rate_error( res[0], res[1])
             self.update( res[1] )
