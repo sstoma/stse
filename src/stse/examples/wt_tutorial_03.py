@@ -33,7 +33,7 @@ from openalea.stse.structures.algo.walled_tissue import wv_edge2cell_edge
 import scipy
 import scipy.integrate.odepack
 import copy
-
+import os
 class DiffusionAction:
     """Diffusion of a substance A in a WalledTissue.
     """

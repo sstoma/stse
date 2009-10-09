@@ -42,7 +42,7 @@ translation = True
 remove_cell_list = []
 # path to data
 stse_path = os.getenv("STSE_DIR")
-file_folder = stse_path+"/trunk/data/09-06-10-marianne-wt2-diff"
+file_folder = stse_path+"/data/09-06-10-marianne-wt2-diff"
 # .dat file name
 dat_file = "wt2.dat"
 #  .link file name
