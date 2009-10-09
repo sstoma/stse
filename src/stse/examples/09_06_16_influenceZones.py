@@ -29,6 +29,9 @@ import openalea.plantgl.ext.all as pd
 from lib_09_06_06_influenceZones import vis, display_config 
 from openalea.stse.io.walled_tissue.dat_config_processing import read_dat_tissue_directory, Config
 
+import os
+
+
 ### first tissue
 def f1( path ):
     """Loading initial tissues and preparing for display configuration.
@@ -45,7 +48,8 @@ def f1( path ):
     return wt, c
 
 path = []
-path.append("/Users/stymek/src/stse/trunk/data/09-06-10-marianne-wt2/")
-path.append("/Users/stymek/src/stse/trunk/data/09-05-26-marianne-quad2/")
-path.append("/Users/stymek/src/stse/trunk/data/09-06-10-marianne-quad1/")
+stse_path = os.getenv("STSE_DIR")
+path.append(stse_path+"/data/09-06-10-marianne-wt2/")
+path.append(stse_path+"/data/09-05-26-marianne-quad2/")
+path.append(stse_path+"/data/09-06-10-marianne-quad1/")
 

@@ -33,6 +33,7 @@ from openalea.stse.structures.algo.walled_tissue import wv_edge2cell_edge
 import scipy
 import scipy.integrate.odepack
 import copy
+import os
 
 class DiffusionAction:
     """Diffusion of a substance A in a WalledTissue.
@@ -258,8 +259,8 @@ def set_computed_influence_zones( wt, config=None, **keys):
                                  with_neighbors=False,
                                  fill_gaps=False,
                                  additional_vertices=[])
-    
-path = "/Users/stymek/src/stse/trunk/data/09-06-10-marianne-wt2-diff/"
+stse_path = os.getenv("STSE_DIR")    
+path = stse_path+"/data/09-06-10-marianne-wt2-diff/"
 
 wt = read_dat_tissue_directory( path +"config.py" )
 c = Config( path+"config.py" )

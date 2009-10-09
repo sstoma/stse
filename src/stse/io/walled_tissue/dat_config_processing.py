@@ -88,8 +88,6 @@ def read_dat_tissue_directory( config ):
     # we initialize the tissue using the data read from
     # .dat file Specification can be found in the stsf
     # documentation
-    #wt = read_dat2walled_tissue( filename = "/Users/stymek/src/stse/trunk/data/09-05-26-marianne-quad2/quad2.dat", tissue_properties = wtc, screen_coordinates = True)
-    #wt = read_dat2walled_tissue( filename = "/Users/stymek/src/stse/trunk/data/09-06-10-marianne-quad1/quad1.dat", tissue_properties = wtc, screen_coordinates = True)
     t = read_dat2walled_tissue( filename = join( path( c.file_folder ), path( c.dat_file ) ), tissue_properties = wtc, screen_coordinates = True)
 
     if links:

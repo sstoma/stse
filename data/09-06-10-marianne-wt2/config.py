@@ -23,6 +23,7 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 
 import math
+import os
 
 # making sure that the configuration is new
 import openalea.stse.io.walled_tissue.dat_config
@@ -40,7 +41,8 @@ translation = True
 #cells to remove
 remove_cell_list = []
 # path to data
-file_folder = "/Users/stymek/src/stse/trunk/data/09-06-10-marianne-wt2"
+stse_path = os.getenv("STSE_DIR")
+file_folder = stse_path+"/data/09-06-10-marianne-wt2"
 # .dat file name
 dat_file = "wt2.dat"
 #  .link file name

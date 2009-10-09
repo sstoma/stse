@@ -28,6 +28,7 @@ from openalea.stse.structures.walled_tissue_const import WalledTissueConst
 from openalea.stse.structures.algo.walled_tissue import create
 from openalea.stse.io.walled_tissue.dat_representation import read_dat2walled_tissue, read_link_file
 from openalea.plantgl.math import Vector3
+import os
 
 # we define the set of settings for a tissue
 wtc = WalledTissueConst( name = "Tissue01")
@@ -40,7 +41,7 @@ wt = WalledTissue( const = wtc )
 
 # please adjust the path to access the files from data directory of stsf
 # project
-stse_path = "/Users/stymek/src/stse/trunk/data"
+stse_path = os.getenv("STSE_DIR")
 
 # we initialize the tissue using the data read from
 # .dat file Specification can be found in the stsf
