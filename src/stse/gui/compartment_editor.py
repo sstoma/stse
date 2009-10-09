@@ -852,8 +852,12 @@ These interactions are redefined for this application:
             c1 = self.voronoi_centers_limit_left_bottom_position 
             c2 = self.voronoi_centers_limit_right_top_position
             self._voronoi_wt = read_qhull2walled_tissue(i, o, remove_infinite_cells=True, constraints=(c1, c2) )
-            self._voronoi_vtk, self._cell_id_vtk2wt, self._cell_id_wt2vtk = \
-                walled_tissue2vtkPolyData( self._voronoi_wt )
+            d = walled_tissue2vtkPolyData( self._voronoi_wt )
+            self._voronoi_vtk = d["tissue"]
+            self._cell_id_vtk2wt = d["cell_id_vtk2wt"]
+            self._cell_id_wt2vtk = d["cell_id_wt2vtk"]
+            self._wv_id_wt2vtk = d["wv_id_wt2vtk"]
+            self._wv_id_vtk2wv = d["wv_id_vtk2wt"]
   
         if not self._voronoi_vtk_ds:
             self._voronoi_vtk_ds = VTKDataSource(data=self._voronoi_vtk)

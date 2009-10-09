@@ -45,9 +45,15 @@ def walled_tissue2vtkPolyData( wt=None ):
     
     # setting wvs
     wvs = tvtk.Points()
+    wv_id_wt2vtk = {}
+    wv_id_vtk2wt = {}
     for i in wt.wvs():
+        # TODO rethink mapping points to ids
         wvs.insert_point(i, tuple( wt.wv_pos( i ) ) ) 
-    
+        id = i
+        wv_id_vtk2wt[ id ] = i
+        wv_id_wt2vtk[ i ] = id
+        
     cell_id_wt2vtk = {}
     cell_id_vtk2wt = {}
     cells = tvtk.CellArray()
@@ -61,7 +67,13 @@ def walled_tissue2vtkPolyData( wt=None ):
     
 
     tissue = tvtk.PolyData(points=wvs, polys=cells)
-    return tissue, cell_id_vtk2wt, cell_id_wt2vtk
+    return {
+        "tissue": tissue,
+        "cell_id_vtk2wt": cell_id_vtk2wt,
+        "cell_id_wt2vtk": cell_id_wt2vtk,
+        "wv_id_vtk2wt": wv_id_vtk2wt,
+        "wv_id_wt2vtk": wv_id_wt2vtk,
+    }
 
 
 def synchronize_id_of_wt_and_voronoi( wt, point_list ):

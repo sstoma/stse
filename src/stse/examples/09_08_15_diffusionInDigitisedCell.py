@@ -289,7 +289,7 @@ class DiffusionAction:
         da = DiffusionAction( window = window )
 
 if __name__ == '__main__':
-    #window = start_editor()
-    window = start_viewer()
+    window = start_editor()
+    #window = start_viewer()
     #da = DiffusionAction(wt=window._voronoi_wt)
     
