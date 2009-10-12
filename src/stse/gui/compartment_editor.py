@@ -75,7 +75,7 @@ class VoronoiCenterVisRep(tvtk.Actor):
     was_inf = Bool(False)
     
     def __init__(self, center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
+                     color=colors.white, opacity=1.0, cell_type='', **kwargs):
         """ Creates a sphere and returns the actor. """
         super(VoronoiCenterVisRep, self).__init__( **kwargs )
         source = tvtk.SphereSource(center=center, radius=radius,
@@ -95,11 +95,11 @@ class VoronoiCenterVisRep(tvtk.Actor):
         pass
     
 def default_voronoi_factory( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0,):
+                     color=colors.white, opacity=1.0, **kwargs):
     """Used to generate voronoi centers.
     """
     return VoronoiCenterVisRep( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity )
+                     color=color, opacity=opacity, **kwargs )
     
 class VoronoiCenterVisRep1(VoronoiCenterVisRep):
     """Represents the cell center of a cell.
