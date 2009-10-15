@@ -24,7 +24,7 @@ __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
 from openalea.plantgl.all import Vector3, norm
-from openalea.stse.tools.math import new_argrument_for_given_curve_length
+from openalea.stse.tools.my_math import new_argrument_for_given_curve_length
     
     
 class ContinousPrimordiaManager (object):

@@ -15,7 +15,10 @@
     Szymon Stoma
 """
 
+
 from __future__ import generators
+from math import ceil
+from copy import copy
     
 def orientation(p,q,r):
     '''Return positive if p-q-r are clockwise, neg if ccw, zero if colinear.'''
@@ -86,3 +89,102 @@ def point_inside_polygon(point,poly):
         p1x,p1y = p2x,p2y
 
     return inside
+
+def int_points_in_polygon( polygon=None ):
+    """Function returns a list of integer coordinated
+    points which are laying inside of the inputed
+    polygon.
+    
+    <Long description of the function functionality.>
+    
+    :parameters:
+        polygon : `[(Float,Float)]`
+            Polygon defined as a list of floats.
+    :rtype: `[(Int, Int)]`
+    :return: List of integer coordinated
+    points which are laying inside of the inputed
+    polygon.
+    """
+    assert len(polygon) > 2
+    pts_inside = []
+    xmin,ymin,xmax,ymax = xy_minimal_bounding_box_of_polygon( polygon )
+    pts = int_points_inside_rectangle(xmin,ymin,xmax,ymax)
+    for pts_x in pts:
+        if pts_x:
+            pts_x_rev = copy(pts_x)
+            pts_x_rev.reverse()
+            nbr = len(pts_x)
+            i = 0
+            while i < nbr and not point_inside_polygon( pts_x[ i ], polygon ):
+                i += 1
+            j = 0
+            while j < nbr and not point_inside_polygon( pts_x_rev[ j ], polygon ):
+                j += 1
+            j = nbr - j 
+            # no was find
+            if i <= j:
+                while i < j:
+                    pts_inside.append( pts_x[i] )
+                    i += 1
+                
+    
+            #for i in pts_x:
+            #    # TODO optimize by check from the begining and and
+            #    if point_inside_polygon( i, polygon ):
+            #        pts_inside.append( i )
+        
+    return pts_inside
+
+
+def xy_minimal_bounding_box_of_polygon( polygon=None ):
+    """Function returns a xy oriented coords of
+    minimum bounding box containing polygon.
+    
+    :parameters:
+        polygon : `[(Float,Float)]`
+            Polygon defined as a list of floats.
+    :rtype: `(Int, Int, Int, Int)`
+    :return: xmin, xmax, ymin, ymax of the
+    bounding polygon.
+    """
+    xmin, xmax, ymin, ymax = polygon[ 0 ][ 0 ], \
+        polygon[ 0 ][ 0 ], polygon[ 0 ][ 1 ], polygon[ 0 ][ 1 ]
+    for i in polygon:
+        if i[0] < xmin: xmin = i[0]
+        if i[0] > xmax: xmax = i[0]
+        if i[1] < ymin: ymin = i[1]
+        if i[1] > ymax: ymax = i[1]
+    return xmin, xmax, ymin, ymax
+ 
+        
+def int_points_inside_rectangle( xmin, xmax, ymin, ymax ):
+    """Function returns a list of lists containing
+    integer coord points which lay inside .
+    
+    :parameters:
+        xmin : Float
+            Left x coord of polygon (left corner is lower then right one)
+        ymin : Float
+            Left y coord of polygon (left corner is lower then right one)
+        xmax : Float
+            Right x coord of polygon (left corner is lower then right one)
+        ymax : Float
+            Right y coord of polygon (left corner is lower then right one)
+    :rtype: `[[(Int,Int),..,(Int,Int)],..,[(Int,Int),..,(Int,Int)]]`
+    :return: List of lists containing int coord points, list are ordered increasingly by
+    x, and internal lists by y
+    """
+    r = []
+    x = int(ceil( xmin ))
+    runned_once = False
+    while x < xmax:
+        runned_once = True
+        t = []
+        y = int(ceil( ymin ))
+        while y < ymax:
+            t.append( (x,y) )
+            y = y+1
+        r.append( t )
+        x = x+1
+    if runned_once: return r
+    else: return [[]]

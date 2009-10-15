@@ -39,7 +39,7 @@ from enthought.tvtk.pyface.scene_editor import SceneEditor
 from enthought.tvtk.api import tvtk
 
 from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, \
-    HSplit, InstanceEditor
+    HSplit, InstanceEditor, HGroup
 
 from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
 from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
@@ -62,7 +62,9 @@ from openalea.stse.io.qhull import voronoi_centers_to_edges
 from openalea.stse.io.walled_tissue.qhull_representation import \
     read_qhull2walled_tissue
 from openalea.stse.tools.emergency import kill_close_points
-
+from openalea.stse.tools.convex_hull import int_points_in_polygon
+from openalea.stse.structures.algo.walled_tissue import \
+    calculate_cell_surface
 
 # ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
 
@@ -329,6 +331,59 @@ class FileLoadBackgroundImage(MyAction):
             a.voronoi_centers_limit_left_bottom_position = (x1,y1)
             a.voronoi_centers_limit_right_top_position = (x2,y2)
 
+
+class ActionsCalculateAverageExpression(MyAction):
+    expression_name = Str("A")
+    red_channel = Bool(True)
+    green_channel = Bool(True)
+    blue_channel = Bool(True)
+    
+    def perform(self):
+        """Calculate average expression level based on the image."""
+        a = self._application
+        t = a._voronoi_wt
+        i = t.cells()[ 0 ]
+        cs = t.cell2wvs( i )
+        cs_pos = map( t.wv_pos, cs)
+        pl = int_points_in_polygon( cs_pos )
+        exp = 0.
+        for j in pl:
+            ind = a._bg_image.actor.input.find_point(j[0], j[1], 0)
+            if self.green_channel:
+                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 0 ]
+            if self.red_channel:
+                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 1 ]
+            if self.blue_channel:
+                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 2 ]
+        surf  = calculate_cell_surface( t, i )
+        print exp / surf
+        
+
+    def default_traits_view( self ):
+        """Description of default view.
+        """
+        view = \
+        View(
+            VGroup(
+                Item(
+                    "expression_name",
+                ),
+                HGroup(
+                    Item(
+                        "red_channel"
+                    ),
+                    Item(
+                        "green_channel"
+                    ),
+                    Item(
+                        "blue_channel"
+                    ),
+                ),
+            ),
+        )
+        return view
+    
+    
 class ActionsCleanVoronoi(MyAction):
     distance = Float(0.1)
     def perform(self):
@@ -481,6 +536,8 @@ These interactions are redefined for this application:
     ##actions
     actions_add_membrane = Instance( ActionsAddMembrane, () )
     actions_clean_voronoi = Instance( ActionsCleanVoronoi, () )
+    actions_calculate_average_expression = Instance( ActionsCalculateAverageExpression, () )
+    
     
     def default_traits_view( self ):
         """Description of default view.
@@ -560,6 +617,13 @@ These interactions are redefined for this application:
         )
         self.actions["actions_clean_voronoi"] = self.actions_clean_voronoi
         
+        self.actions_calculate_average_expression = ActionsCalculateAverageExpression(
+            parent=self,
+            name = "Calculates expressions",
+            toolip = "Calculates the avarege expression for each cell in a mesh based on the image", 
+            action = "self.perform",
+        )
+        self.actions["actions_calculate_average_expression"] = self.actions_calculate_average_expression
         
         # specifying the view
         view = View(
@@ -608,6 +672,12 @@ These interactions are redefined for this application:
                             label='',
                             show_label=False,
                         ),
+                        Item(
+                            'actions_calculate_average_expression',
+                            style='custom',
+                            label='',
+                            show_label=False,
+                        ),
                         show_border = True,
                         label = 'Actions',
                     ),
@@ -644,7 +714,7 @@ These interactions are redefined for this application:
             # look at:
             # http://code.enthought.com/projects/traits/docs/html/TUIUG/custom_view.html
             kind='live',
-            title='MyApplication',
+            title='Compartment Editor',
             resizable=True,
             width=800,
             height=600,
@@ -662,6 +732,7 @@ These interactions are redefined for this application:
                     actions_add_grid_voronoi_centers,
                     self.actions_add_membrane,
                     self.actions_clean_voronoi,
+                    self.actions_calculate_average_expression,
                     name = '&Actions',
                 ),
             ),
