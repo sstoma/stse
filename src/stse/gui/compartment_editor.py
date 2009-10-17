@@ -33,7 +33,7 @@ from enthought.pyface.action.api import Action, MenuBarManager, \
     MenuManager, ToolBarManager
 
 from enthought.traits.api import  Instance, HasTraits, Range, \
-    on_trait_change, Color, HTML, Enum, Tuple, Int, Bool, Array, Float, Any, Str
+    on_trait_change, Color, HTML, Enum, Tuple, Int, Bool, Array, Float, Any, Str, Button
 
 from enthought.tvtk.pyface.scene_editor import SceneEditor
 from enthought.tvtk.api import tvtk
@@ -124,7 +124,10 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
         self.mapper = tvtk.PolyDataMapper(input=source.output)
         self.property = tvtk.Property(opacity=opacity, color=color)
         self.voronoi_center=array(3)
-    
+        if kwargs.has_key( "cell_type" ):
+            self.cell_type = kwargs["cell_type"]
+            self.change_cell_center_color()
+        
     def default_traits_view( self ):    
         view = View(
             Item("cell_id", style='readonly'),
@@ -154,11 +157,11 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
             self.property.color = colors.pink    
 
 def voronoi_factory_general( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0,):
+                     color=colors.white, opacity=1.0, **kwargs):
     """Used to generate voronoi centers.
     """
     return VoronoiCenterVisRepGeneral( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity )
+                     color=color, opacity=opacity, **kwargs )
     
 # ---------------------------------------------------- CUSTOMIZATION GUI CLASSES
 
@@ -180,6 +183,7 @@ class MyAction(Action):
     enabled_when = ""
     checked_when = ""
     no_conf_string = Str("No configuration options")
+    perform_btn = Button( label='Execute' )
     
     def __init__(self, **kwargs):
         """Init"""
@@ -201,72 +205,93 @@ class MyAction(Action):
                 'no_conf_string',
                 show_label=False,
                 style='readonly',
-            )
+            ),
+            Item(
+                "perform_btn",
+                show_label = False,
+            ),
         )
         return view
+    
+    def _perform_btn_fired( self ):
+        """Runs default action.
+        """
+        self.perform_calc()
 
+    def perform_calc( self ):
+        """Runs default action.
+        """
+        print " !: Perform not defined.."
+        
+    
 # ---------------------------------------------------------------------- ACTIONS
 
         
 class ActionsAddVoronoiCenters(MyAction):
+    method = Enum("Grid", "Random")
     voronoi_centers_limit_left_bottom_position = Tuple(0., 0.)
     voronoi_centers_limit_right_top_position = Tuple(100., 100.)
     voronoi_centers_add_number = Int(100)
-    
-    def perform_random_calc(self):
-        """
-        Adds random voronoi centers.
-        """
-        a = self._application
-        p=[]
-        (xmin,ymin) = self.voronoi_centers_limit_left_bottom_position
-        (xmax,ymax) = self.voronoi_centers_limit_right_top_position
-        x_range = xmax-xmin
-        y_range = ymax-ymin
-        for i in range( self.voronoi_centers_add_number ):
-            p.append( (xmin+x_range*random.random(), ymin+y_range*random.random(), 0.) )
-        a.add_voronoi_centers( pos_list=p, render_scene=False )    
-        a.scene_model.render()
+
+    def perform_calc( self ):
+        if self.method == "Grid":
+            a = self._application
+            p=[]
+            (xmin,ymin) = self.voronoi_centers_limit_left_bottom_position
+            (xmax,ymax) = self.voronoi_centers_limit_right_top_position
+            x_range = xmax-xmin
+            y_range = ymax-ymin
+            area = x_range*y_range
+            small_area = area/ float(self.voronoi_centers_add_number)
+            delta = math.sqrt( small_area )
+            x_nbr = int(x_range / delta)
+            y_nbr = int(y_range / delta)
+            for i in range( x_nbr ):
+                for j in range( y_nbr ):
+                    p.append( ( (j%2)*delta/2.+xmin+(delta/2.)+i*delta, (ymin+(delta/2.)+j*delta), 0. ) )
+            a.add_voronoi_centers( pos_list=p, render_scene=False )    
+            a.scene_model.render()
+        elif self.method == "Random":
+            a = self._application
+            p=[]
+            (xmin,ymin) = self.voronoi_centers_limit_left_bottom_position
+            (xmax,ymax) = self.voronoi_centers_limit_right_top_position
+            x_range = xmax-xmin
+            y_range = ymax-ymin
+            for i in range( self.voronoi_centers_add_number ):
+                p.append( (xmin+x_range*random.random(), ymin+y_range*random.random(), 0.) )
+            a.add_voronoi_centers( pos_list=p, render_scene=False )    
+            a.scene_model.render()
  
-    def perform_grid_calc(self):
-        a = self._application
-        p=[]
-        (xmin,ymin) = self.voronoi_centers_limit_left_bottom_position
-        (xmax,ymax) = self.voronoi_centers_limit_right_top_position
-        x_range = xmax-xmin
-        y_range = ymax-ymin
-        area = x_range*y_range
-        small_area = area/ float(self.voronoi_centers_add_number)
-        delta = math.sqrt( small_area )
-        x_nbr = int(x_range / delta)
-        y_nbr = int(y_range / delta)
-        for i in range( x_nbr ):
-            for j in range( y_nbr ):
-                p.append( ( (j%2)*delta/2.+xmin+(delta/2.)+i*delta, (ymin+(delta/2.)+j*delta), 0. ) )
-        a.add_voronoi_centers( pos_list=p, render_scene=False )    
-        a.scene_model.render()
         
     def default_traits_view( self ):
         """Description of default view.
         """
         view = View(
             VGroup(
-               Item(
+                Item(
+                    "method",
+                ),
+                Item(
                    "voronoi_centers_limit_left_bottom_position",
                    label="Left bottom",
-               ),
-               Item(
+                ),
+                Item(
                    "voronoi_centers_limit_right_top_position",
                    label="Right top",
-               ),
-               Item(
+                ),
+                Item(
                    "voronoi_centers_add_number",
                    label="# centers",
                    # Number of voronoi centers to add
-               ),
-               show_border = True,
-               label = 'Add Voronoi centers',
-           ),
+                ),
+                Item(
+                    "perform_btn",
+                    show_label = False,
+                ),
+                show_border = True,
+                label = 'Add Voronoi centers',
+            ),
         )
         return view
 
@@ -314,6 +339,10 @@ class ActionsAddMembrane(MyAction):
                     label="outside cell type",
                     # Number of voronoi centers to add
                 ),
+                Item(
+                    "perform_btn",
+                    show_label = False,               
+                ),
                 show_border = True,
                 label = 'Add membrane',
             ),
@@ -334,8 +363,6 @@ class ActionsAddMembrane(MyAction):
     
     def perform_calc(self):
         a = self._application
-        #a._selected_action = self
-        return
         op=[]
         ip=[]
         dir_x = self.p2[0] - self.p1[0]
@@ -363,11 +390,16 @@ class ActionsUpdateVoronoiEdges(MyAction):
 
 
 class ActionsCalculateAverageExpression(MyAction):
-    expression_name = Str("A")
+    expression_name = Str("")
     red_channel = Bool(True)
     green_channel = Bool(True)
     blue_channel = Bool(True)
-    
+
+    def __init__(self, **kwargs):
+        """Init"""
+        super(ActionsCalculateAverageExpression, self).__init__( **kwargs )
+        #self.expression_name = Enum( kwargs["cell_properties"].keys() )
+        
     def perform_calc(self):
         """Calculate average expression level based on the image."""
         a = self._application
@@ -395,20 +427,27 @@ class ActionsCalculateAverageExpression(MyAction):
         view = \
         View(
             VGroup(
+                #Item(
+                #    "expression_name",
+                #    #editor=InstanceEditor(),
+                #    style='simple',
+                #),
+                "expression_name",
                 Item(
-                    "expression_name",
+                    "red_channel"
                 ),
-                HGroup(
-                    Item(
-                        "red_channel"
-                    ),
-                    Item(
-                        "green_channel"
-                    ),
-                    Item(
-                        "blue_channel"
-                    ),
+                Item(
+                    "green_channel"
                 ),
+                Item(
+                    "blue_channel"
+                ),
+                Item(
+                    "perform_btn",
+                    show_label = False,               
+                ),
+                show_border = True,
+                label = 'Calculate expressions',
             ),
         )
         return view
@@ -429,7 +468,11 @@ class ActionsCleanVoronoi(MyAction):
             VGroup(
                 Item(
                     "distance",
-                )
+                ),
+                Item(
+                    "perform_btn",
+                    show_label = False,               
+                ),
             )
         )
         return view
@@ -661,6 +704,7 @@ These interactions are redefined for this application:
             name = "Calculates expressions",
             toolip = "Calculates the avarege expression for each cell in a mesh based on the image", 
             action = "self.perform",
+            cell_properties = self.cell_properties,
         )
         self.actions["actions_calculate_average_expression"] = self.actions_calculate_average_expression
         
@@ -948,8 +992,9 @@ These interactions are redefined for this application:
         # TODO
         if len( self._voronoi_center_list ) > 4:
             (i,o) = voronoi_centers_to_edges( self.voronoi_centers() )
-            c1 = self.voronoi_centers_limit_left_bottom_position 
-            c2 = self.voronoi_centers_limit_right_top_position
+            a = self.actions[ "action_add_voronoi_centers" ]
+            c1 = a.voronoi_centers_limit_left_bottom_position 
+            c2 = a.voronoi_centers_limit_right_top_position
             self._voronoi_wt = read_qhull2walled_tissue(i, o, remove_infinite_cells=True, constraints=(c1, c2) )
             d = walled_tissue2vtkPolyData( self._voronoi_wt )
             self._voronoi_vtk = d["tissue"]
