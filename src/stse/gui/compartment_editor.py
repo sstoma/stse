@@ -390,7 +390,7 @@ class ActionsUpdateVoronoiEdges(MyAction):
 
 
 class ActionsCalculateAverageExpression(MyAction):
-    expression_name = Str("")
+    expression_name = Str("custom_cell_property1")
     red_channel = Bool(True)
     green_channel = Bool(True)
     blue_channel = Bool(True)
@@ -401,9 +401,21 @@ class ActionsCalculateAverageExpression(MyAction):
         #self.expression_name = Enum( kwargs["cell_properties"].keys() )
         
     def perform_calc(self):
-        """Calculate average expression level based on the image."""
+        """Calculate average expression level based on the image.""" 
         a = self._application
         t = a._voronoi_wt
+        
+        # checking if there is one cell or more
+        if len( t.cells() ) == 0:
+            print " !: Add more voronoi centers to have non empty mesh"
+            return
+        
+        if not a.cell_properties.has_key( self.expression_name ):
+            print " !: Specify an existing cell property name in Corresponding property"
+            return
+        
+        t.init_cell_property( self.expression_name, a.cell_properties[ self.expression_name ] )
+        
         i = t.cells()[ 0 ]
         cs = t.cell2wvs( i )
         cs_pos = map( t.wv_pos, cs)
@@ -411,16 +423,20 @@ class ActionsCalculateAverageExpression(MyAction):
         exp = 0.
         for j in pl:
             ind = a._bg_image.actor.input.find_point(j[0], j[1], 0)
+            d = a._bg_image.actor.input.point_data.scalars[ ind ]
             if self.green_channel:
-                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 0 ]
+                exp += d[ 0 ]
             if self.red_channel:
-                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 1 ]
+                exp += d[ 1 ]
             if self.blue_channel:
-                exp += a._bg_image.actor.input.point_data.scalars[ ind ][ 2 ]
+                exp += d[ 2 ]
         surf  = calculate_cell_surface( t, i )
-        print exp / surf
+        t.cell_property( i, self.expression_name, exp / surf)
         
-
+        synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
+        copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, [self.expression_name])
+        
+        
     def default_traits_view( self ):
         """Description of default view.
         """
@@ -432,7 +448,10 @@ class ActionsCalculateAverageExpression(MyAction):
                 #    #editor=InstanceEditor(),
                 #    style='simple',
                 #),
-                "expression_name",
+                Item(
+                    "expression_name",
+                    label = "Corresponding property",
+                ),
                 Item(
                     "red_channel"
                 ),
