@@ -69,7 +69,7 @@ def diameter(Points):
 
 def point_inside_polygon(point,poly):
     """Determine if a point is inside a given polygon or not
-    Polygon is a list of (x,y) pairs.
+    Polygon is a list of (x,y,z) pairs. z is not taken into account..
     """
 
     n = len(poly)
@@ -111,23 +111,33 @@ def int_points_in_polygon( polygon=None ):
     pts = int_points_inside_rectangle(xmin,ymin,xmax,ymax)
     for pts_x in pts:
         if pts_x:
+            # preparation
             pts_x_rev = copy(pts_x)
             pts_x_rev.reverse()
             nbr = len(pts_x)
+            # we find first point from *bottom* which is in the polygon
+            # i is set to the coords of this point
             i = 0
             while i < nbr and not point_inside_polygon( pts_x[ i ], polygon ):
                 i += 1
+                
+            # we find first point from *top* which is in the polygon
+            # j is set to the coords of this point (in the *pts_x* list)
             j = 0
             while j < nbr and not point_inside_polygon( pts_x_rev[ j ], polygon ):
                 j += 1
             j = nbr - j 
-            # no was find
+            
+            # we copy every point from i to j since on the definition of
+            # convexity they belong to the polygon
+            # if no point was found we skip (so the empty list will be added)
             if i <= j:
                 while i < j:
                     pts_inside.append( pts_x[i] )
                     i += 1
                 
-    
+            # version 0.1 - no optimization
+            # we checked for every point
             #for i in pts_x:
             #    # TODO optimize by check from the begining and and
             #    if point_inside_polygon( i, polygon ):
@@ -183,8 +193,8 @@ def int_points_inside_rectangle( xmin, xmax, ymin, ymax ):
         y = int(ceil( ymin ))
         while y < ymax:
             t.append( (x,y) )
-            y = y+1
+            y += 1
         r.append( t )
-        x = x+1
+        x += 1
     if runned_once: return r
     else: return [[]]
