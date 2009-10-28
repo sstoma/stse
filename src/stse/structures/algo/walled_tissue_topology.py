@@ -172,7 +172,14 @@ def find_degenerated_cells( wtt ):
         if len( wtt.cell2wvs( cell=i ) ) < 3:
             print " ! degenerated cell:", i, wtt.cell2wvs( cell=i )
     for i in wtt.wvs():    
-        if len( wtt.wv2cells( wv=i ) ) != 3 and len( wtt.wv2cells( wv=i ) ) != 2:
+        if len( wtt.wv2cells( wv=i ) ) != 3 and len( wtt.wv2cells( wv=i ) ) != 2 and len( wtt.wv2cells( wv=i ) ) != 1:
             print " ! degenerated wv:", i, wtt.wv2cells( wv=i )
 
-
+def kill_degenerated_cells( wtt ):
+    c = []
+    for i in wtt.cells():
+        if len( wtt.cell2wvs( cell=i ) ) < 3:
+            c.append( i )
+    for i in c:
+        wtt.remove_cell( i )
+        

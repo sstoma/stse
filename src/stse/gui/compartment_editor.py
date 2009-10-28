@@ -580,8 +580,9 @@ class CompartmentEditorWindow( CompartmentWindow ):
             if widget.GetKeyCode() == 'z':
                 pos = widget.GetEventPosition()
                 d = self.scene_model.picker.pick_point(pos[ 0 ], pos[ 1 ])
-                self.select_voronoi_center( self.add_voronoi_center(pos=(d.coordinate[ 0 ], d.coordinate[ 1 ], 0.) ) )
-                #self.event_w = widget
+                x = self.add_voronoi_center(pos=(d.coordinate[ 0 ], d.coordinate[ 1 ], 0.) )
+                # crash!
+                #self.select_voronoi_center( x )
         self.scene_model.interactor.add_observer("KeyPressEvent", add_actor_callback)
 
         # adding a sphere using key interaction - key 'x'

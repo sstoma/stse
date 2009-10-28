@@ -326,13 +326,17 @@ These interactions are redefined for this application:
 
     
     def add_voronoi_center( self, pos=(0,0,0), render_scene=True, update_vtk_from_voronoi=True ):
+        vc = self.voronoi_centers()
+        if (pos[0],pos[1]) in vc:
+            return None
         s = self.voronoi_factory(resolution=8, radius=1. )
         s.scale=array([self.voronoi_center_size,self.voronoi_center_size, \
             self.voronoi_center_size])
         s.position = pos
         self.scene_model.add_actor( s )
         self._voronoi_center_list.append( s )
-        if update_vtk_from_voronoi: self.update_vtk_from_voronoi( render_scene=render_scene)
+        if update_vtk_from_voronoi:
+            self.update_vtk_from_voronoi( render_scene=render_scene)
         return s
 
 
@@ -352,8 +356,11 @@ These interactions are redefined for this application:
 
     def select_voronoi_center( self, voronoi_center ):
         if voronoi_center:
-            self._bw.prop3d = voronoi_center 
+            self._bw.prop3d = voronoi_center
             self._bw.center = voronoi_center.position
+            # hack to avoid crash
+            self._bw.place_widget(-2.,-1.,-2.,-1.,-2.,-1.)
+            self.scene_model.render()
             self._bw.place_widget()
             self.scene_model.render()
         self._selected_voronoi_center = voronoi_center
@@ -364,8 +371,11 @@ These interactions are redefined for this application:
         self.scene_model.remove_actor( voronoi_center )
         if self._voronoi_center_list:
             self.select_voronoi_center( self._voronoi_center_list[ 0 ] )
-        else: self.select_voronoi_center( None )
-        if update_vtk_from_voronoi: self.update_vtk_from_voronoi( render_scene= render_scene)
+        else:
+            self.select_voronoi_center( None )
+        if update_vtk_from_voronoi:
+            self.update_vtk_from_voronoi( render_scene= render_scene)
+
 
 
     def remove_voronoi_centers( self, voronoi_center_list=[], render_scene=True, update_vtk_from_voronoi=True ):
@@ -436,14 +446,12 @@ These interactions are redefined for this application:
 
     def update_vtk_from_voronoi( self, render_scene = True, voronoi_changed=False ):
         # TODO
-
         d = walled_tissue2vtkPolyData( self._voronoi_wt )
         self._voronoi_vtk = d["tissue"]
         self._cell_id_vtk2wt = d["cell_id_vtk2wt"]
         self._cell_id_wt2vtk = d["cell_id_wt2vtk"]
         self._wv_id_wt2vtk = d["wv_id_wt2vtk"]
         self._wv_id_vtk2wv = d["wv_id_vtk2wt"]
-        
         if not self._voronoi_vtk_ds:
             self._voronoi_vtk_ds = VTKDataSource(data=self._voronoi_vtk)
             engine = mlab.get_engine()
@@ -454,11 +462,11 @@ These interactions are redefined for this application:
         else:
             self._voronoi_vtk_ds.data = self._voronoi_vtk
             self._voronoi_vtk_ds.update()
-        
         if self._cell_scalars_active:
             if self._cell_scalars_active_name in self.cell_properties.keys():
                 self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
         if render_scene: self.scene_model.render()
+
 
         
     def __init__( self, voronoi_factory=default_voronoi_factory, cell_properties={} ):

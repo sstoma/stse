@@ -67,6 +67,7 @@ def walled_tissue2vtkPolyData( wt=None ):
     
 
     tissue = tvtk.PolyData(points=wvs, polys=cells)
+    #print wvs, cells
     return {
         "tissue": tissue,
         "cell_id_vtk2wt": cell_id_vtk2wt,

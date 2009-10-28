@@ -20,6 +20,8 @@ from openalea.stse.tools.convex_hull import hulls
 from openalea.stse.structures.walled_tissue import WalledTissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst
 from openalea.stse.structures.algo.walled_tissue import create
+from openalea.stse.structures.algo.walled_tissue_topology import find_degenerated_cells, \
+    kill_degenerated_cells
 from openalea.plantgl.math import Vector3
 import math
 from pylab import inf
@@ -130,5 +132,7 @@ def read_qhull2walled_tissue( voronoi_centers, voronoi_edges, tissue_properties=
         # removing outside cells
         for i in cells_outside:
             wt.remove_cell( i )
+    
+    kill_degenerated_cells( wt )
     return wt
 
