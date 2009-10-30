@@ -485,7 +485,7 @@ class FileLoadBackgroundImage(MyAction):
         a = self._application
         extns = ['*.bmp','*.png','*.tif','*.jpg','*']
         dlg = FileDialog( action='open',
-                wildcard='|'.join(extns), title="Load image")
+                wildcard='*', title="Load image")
         
         if dlg.open() == OK:
             engine = mlab.get_engine()
@@ -496,6 +496,7 @@ class FileLoadBackgroundImage(MyAction):
             (y1,y2) = a._bg_image.actor.y_range
             if a.actions.has_key( "action_add_voronoi_centers" ):
                 act = a.actions[ "action_add_voronoi_centers" ]
+                a._cut_plane.place_widget(x1,x2,y1,y2,0.,0.)
                 act.voronoi_centers_limit_left_bottom_position = (x1,y1)
                 act.voronoi_centers_limit_right_top_position = (x2,y2)
 

@@ -27,7 +27,7 @@ __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
 
-import sets
+
 
 
 def create( wtt, cell2wv_list = {} ):
@@ -83,6 +83,7 @@ def initial_find_the_inside_of_tissue( wtt ):
     """
     #print "ic"
     #raw_input()
+    import sets
     fcell = wtt._cells.nodes()[ 0 ]
     already_searched = sets.Set()
     to_search = [fcell]

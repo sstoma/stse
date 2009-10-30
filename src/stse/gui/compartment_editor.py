@@ -62,14 +62,13 @@ from openalea.stse.io.qhull import voronoi_centers_to_edges
 from openalea.stse.io.walled_tissue.qhull_representation import \
     read_qhull2walled_tissue
 from openalea.stse.tools.emergency import kill_close_points
-from openalea.stse.tools.convex_hull import int_points_in_polygon
+from openalea.stse.tools.convex_hull import int_points_in_polygon, xy_minimal_bounding_box_of_polygon
 from openalea.stse.structures.algo.walled_tissue import \
     calculate_cell_surface
 from openalea.stse.gui.voronoi_aplications import VoronoiCenterVisRep, \
     VoronoiCenterVisRepGeneral, MyScene, MyAction, general_cell_properties, \
     default_voronoi_factory, general_voronoi_factory, CompartmentWindow, \
     FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue \
-
 
 # ---------------------------------------------------------------------- ACTIONS
 
@@ -109,7 +108,10 @@ class ActionsAddVoronoiCenters(MyAction):
                 p.append( (xmin+x_range*random.random(), ymin+y_range*random.random(), 0.) )
             a.add_voronoi_centers( pos_list=p, render_scene=False )    
             a.scene_model.render()
- 
+    
+    def set_bounds(self, xmin, xmax,ymin,ymax):
+        self.voronoi_centers_limit_left_bottom_position = (xmin, ymin)
+        self.voronoi_centers_limit_right_top_position = (xmax,ymax)
         
     def default_traits_view( self ):
         """Description of default view.
@@ -341,6 +343,14 @@ class ActionsCleanVoronoi(MyAction):
     
 
 
+class ViewSwitchCutPlane(MyAction):
+    def perform(self):
+        """swith"""
+        a = self._application
+        a._cut_plane.enabled = not a._cut_plane.enabled
+        
+
+
 class FileSaveWalledTissue(MyAction):
     def perform(self):
         """Pops up a dialog used to save WalledTissue."""
@@ -427,6 +437,15 @@ class CompartmentEditorWindow( CompartmentWindow ):
             cell_properties = self.cell_properties,
         )
         self.actions["actions_calculate_average_expression"] = actions_calculate_average_expression
+
+        view_switch_cut_plane = ViewSwitchCutPlane(
+            parent=self,
+            name = "Cut plane ON/OFF",
+            toolip = "Switches cut plane ON/OFF", 
+            action = "self.perform",
+        )
+        self.actions["view_switch_cut_plane"] = view_switch_cut_plane
+
     
     def default_traits_view( self ):
         """Description of default view.
@@ -530,6 +549,10 @@ class CompartmentEditorWindow( CompartmentWindow ):
                     self.actions[ "actions_calculate_average_expression" ],
                     name = '&Actions',
                 ),
+                MenuManager(
+                    self.actions[ "view_switch_cut_plane" ],
+                    name = '&View',
+                ),
             ),
             ## defining toolbar content
             #toolbar= ToolBarManager(
@@ -548,7 +571,21 @@ class CompartmentEditorWindow( CompartmentWindow ):
             self.select_voronoi_center( self._voronoi_center_list[0] )
             self._bw.scale = False
             self._bw.place_widget()
-
+            
+        # setting up image clipper
+        self._cut_plane = tvtk.BoxWidget(interactor=self.scene_model.interactor)
+        #self._cut_plane.place_widget()
+        self._cut_plane.off()
+        self._cut_plane.scaling_enabled=1
+        self._cut_plane.rotation_enabled=0
+        def clipper_edit_event(widget, event):
+            """This callback sets the """
+            pl = tvtk.Planes()
+            self._cut_plane.get_planes( pl )
+            xmin, xmax, ymin, ymax = xy_minimal_bounding_box_of_polygon( pl.points )
+            self.actions[ "action_add_voronoi_centers" ].set_bounds(xmin, xmax,ymin,ymax)
+        self._cut_plane.add_observer("EndInteractionEvent", clipper_edit_event)
+        
         def callback_end(widget, event):
             """This callback sets the """
             if self._bw.prop3d:

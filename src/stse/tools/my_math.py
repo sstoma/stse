@@ -69,3 +69,4 @@ def bisection( f=None, x0=0., x1=1., tolerance=0.1 ):
         if f(x0)*f(midpoint) > 0: x0 = midpoint
         else: x1=midpoint
     return (x0+x1)/2.
+    
