@@ -313,12 +313,13 @@ def general_viewing():
     return CompartmentViewerWindow( voronoi_factory=general_voronoi_factory, \
         cell_properties=general_cell_properties)    
 
-
-if __name__ == '__main__':
+def start_gui():
     # Create and open an application window.
     window = general_viewing()
     window.edit_traits()
     window.do()
     GUI().start_event_loop()
-    
+
+if __name__ == '__main__':
+    start_gui() 
         

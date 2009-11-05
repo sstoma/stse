@@ -688,8 +688,7 @@ def general_editing():
     return CompartmentEditorWindow( voronoi_factory=general_voronoi_factory, \
         cell_properties=general_cell_properties)    
 
-
-if __name__ == '__main__':
+def start_gui():
     # Create and open an application window.
     #window = mesh_editing()
     window = general_editing()
@@ -697,4 +696,6 @@ if __name__ == '__main__':
     window.do()
     GUI().start_event_loop()
 
+if __name__ == '__main__':
+    start_gui()
         

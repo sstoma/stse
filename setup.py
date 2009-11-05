@@ -58,8 +58,8 @@ setup(
     namespace_packages = [namespace],
     create_namespaces = True,
     py_modules = [],
-    packages =  [ 'openalea.' + x for x in find_packages('src') ],
-	package_dir = { 'openalea.stse':  pj('src','stse'), "":"src" }, 
+    packages =  [ 'openalea.stse.' + x for x in find_packages('src/stse/') ],
+    package_dir = { 'openalea.stse':  'src/stse/', "":"src" }, 
 
     
     include_package_data = True,
@@ -69,12 +69,16 @@ setup(
 
     #lib_dirs = {'lib' : pj(build_prefix, 'lib'), },
     #inc_dirs = { 'include' : pj(build_prefix, 'include') },
-	#share_dirs = { 'tutorial' : pj('examples','tutorial')},
+    #share_dirs = { 'tutorial' : pj('examples','tutorial')},
     
     #postinstall_scripts = [],
 
     # Scripts
-    entry_points = {},
+    entry_points = { 'gui_scripts': [
+	    'stse_compartment_editor = openalea.stse.gui.compartment_editor:start_gui',
+	    'stse_compartment_viewer= openalea.stse.gui.compartment_viewer:start_gui',
+	    ]},
+
 
     # Dependencies
     setup_requires = ['openalea.deploy'],
