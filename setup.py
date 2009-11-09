@@ -59,7 +59,9 @@ setup(
     create_namespaces = True,
     py_modules = [],
     packages =  [ 'openalea.stse.' + x for x in find_packages('src/stse/') ],
-    package_dir = { 'openalea.stse':  'src/stse/', "":"src" }, 
+    package_dir = { 'openalea.stse':  pj('src','stse'), "":"src" },
+    packages.append( 'openalea.stse' )
+    print "# Installing packages: ", packages
 
     
     include_package_data = True,
