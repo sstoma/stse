@@ -22,11 +22,26 @@ __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
 
+
+from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface,\
+    calculate_wall_length, cell_edge2wv_edge, cell_centers
+import numpy as np
+from numpy import array
+from openalea.plantgl.all import norm
+import scipy
+import scipy.integrate.odepack
+import copy
+
 class PhysiologicalModelAction:
     """General physiological simulation based on ODE equations.
     """
 
-    def __init__(self, wt= None, window=None, tissue_display_property="custom_cell_property1"):
+    def __init__(self, wt= None,
+        window=None,
+        tissue_display_property="custom_cell_property1",
+        cell_properties={"custom_cell_property1":1.},
+        cell_properties_stable_criteria={"custom_cell_property1":0.001}):
+        
         self.t = 0.
         self.h = 0.1
         self.c_change = -np.inf #acceptable change could not be smaller to classifie as error.
@@ -48,6 +63,8 @@ class PhysiologicalModelAction:
         self.wv_edge_area = {}
         self.cell_volume = {}
         self.cell_distance = {}
+        self.cell_properties = cell_properties
+        self.cell_properties_stable_criteria = cell_properties_stable_criteria
         
         self.prepare_geometry()
         self.prepare_sys_map()
@@ -92,58 +109,60 @@ class PhysiologicalModelAction:
         
     def update( self, x ):
         t = self.wt
-        for i in t.cells():
-            t0 = x[ self.cell2sys[ i ] ]
-            t0 = max(0,t0)
-            self.A( cell=i, value= t0)
+        for prop in self.cell_properties.keys():
+            for i in t.cells():
+                t0 = x[ self.cell2sys[ prop ][ i ] ]
+                #t0 = max(0,t0)
+                t.cell_property( cell=i, property=prop, value= t0)
 
     def rate_error( self, xn, xnprim ):
         t = True
-        max = -float("infinity")
-        for i in range( len( self.wt.cells() )):
-            if abs( xn[i] - xnprim[i] ) > max:
-                max=abs( xn[i] - xnprim[i] )
-            if self.c_change < abs( xn[i] - xnprim[i] ):
-                t=False 
-        print " #: errror =  ", max# abs( xn[i] - xnprim[i] )
+        for prop in self.cell_properties.keys():
+            max = -float("infinity")
+            for i in self.wt.cells():
+                m = abs( xn[ self.cell2sys[ prop ][ i ] ] - xnprim[ self.cell2sys[ prop ][ i ] ] )
+                if m > max:
+                    max=m
+            if self.cell_properties_stable_criteria[ prop ] < max:
+                 t=False 
+            print " #: errror ", prop, "=  ", max# abs( xn[i] - xnprim[i] )
         return t
 
     def prepare_x0( self ):
-        x0 = []
         t = self.wt
-        for x in range( len(t.cells()) ):
-            x0.append(0)
-        for i in t.cells():
-            x0[ self.cell2sys[ i ] ] = self.A( i )
+        x0 = np.zeros( len(t.cells())*len(self.cell_properties.keys()) )
+        for i in self.cell_properties.keys():
+            for j in t.cells():
+                x0[ self.cell2sys[ i ][ j ] ] = t.cell_property(j, i)
         return x0
 
     def prepare_sys_map( self ):
         self.cell2sys = {}
         t = self.wt
         ind = 0
-        for i in t.cells():
-            self.cell2sys[ i ] = ind
-            ind += 1
+        for i in self.cell_properties.keys():
+            cell2sys_prop = {}
+            for j in t.cells():
+                cell2sys_prop[ j ] = ind
+                ind += 1
+            self.cell2sys[ i ] = cell2sys_prop
         
         
     def f( self, x, t ):
 
-        def D( (i, j), t, x):
-            return self.wv_edge_area[(i,j)]*(A(i,t,x)-A(j,t,x))/(self.cell_volume[i]*self.cell_distance[(i,j)])
+        # diffusion for property prop
+        def D( prop, (i, j), t, x):
+            return self.wv_edge_area[(i,j)]*(A(prop, i,t,x)-A(prop, j,t,x))/(self.cell_volume[i]*self.cell_distance[(i,j)])
         
-        def A( cid, t, x ):
-            return x[ self.cell2sys[ cid ] ]
+        def A( prop, cid, t, x ):
+            return x[ self.cell2sys[ prop ][ cid ] ]
         
         t = self.wt
         x2 = np.zeros_like( x )
-        for i in t.cells():
-            ct = t.cell_property( cell=i, property= "cell_type" )
-            if ct == "cytoplasm" or ct == "kernel":
-                if ct == "kernel":
-                    x2[ self.cell2sys[ i ] ] += self.c_alpha #* self.i_A_signal_source( i )
+        for prop in self.cell_properties.keys():
+            for i in t.cells():
                 for n in t.cell_neighbors( cell=i ):
-                    if t.cell_property( cell=n, property= "cell_type" ) != "internal_membrane":
-                        x2[ self.cell2sys[ i ] ] += self.c_gamma*D((n,i),t,x)
+                    x2[ self.cell2sys[ prop ][ i ] ] += D(prop,(n,i), t, x)
         return x2
             
 

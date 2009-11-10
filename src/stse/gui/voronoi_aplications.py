@@ -509,9 +509,13 @@ class FileLoadWalledTissue(MyAction):
                 wildcard='*', title="Load WalledTissue")
         
         if dlg.open() == OK:
+            self.load( dlg.path )
+            
+    def load( self, path):
+            a = self._application
             # TODO: add reading properties to voronoi center class
             a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
-            a._voronoi_wt = read_walled_tissue( file_name=dlg.path  )
+            a._voronoi_wt = read_walled_tissue( file_name=path  )
                 
             pos_list = []
             for i in a._voronoi_wt.cells():
