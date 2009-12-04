@@ -68,7 +68,8 @@ from openalea.stse.structures.algo.walled_tissue import \
 from openalea.stse.gui.voronoi_aplications import VoronoiCenterVisRep, \
     VoronoiCenterVisRepGeneral, MyScene, MyAction, general_cell_properties, \
     default_voronoi_factory, general_voronoi_factory, CompartmentWindow, \
-    FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue \
+    FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue, \
+    ActionsDefineCellTypes
 
 # ---------------------------------------------------------------------- ACTIONS
 
@@ -269,12 +270,16 @@ class ActionsCalculateAverageExpression(MyAction):
             for j in pl:
                 ind = a._bg_image.actor.input.find_point(j[0], j[1], 0)
                 d = a._bg_image.actor.input.point_data.scalars[ ind ]
-                if self.green_channel:
-                    exp += d[ 0 ]
-                if self.red_channel:
-                    exp += d[ 1 ]
-                if self.blue_channel:
-                    exp += d[ 2 ]
+                try:
+                    if self.green_channel:
+                        exp += d[ 0 ]
+                    if self.red_channel:
+                        exp += d[ 1 ]
+                    if self.blue_channel:
+                        exp += d[ 2 ]
+                except TypeError:
+                    exp += d
+                    
             surf  = calculate_cell_surface( t, i )
             t.cell_property( i, self.expression_name, exp / surf)
         
@@ -446,6 +451,13 @@ class CompartmentEditorWindow( CompartmentWindow ):
         )
         self.actions["view_switch_cut_plane"] = view_switch_cut_plane
 
+        actions_define_cell_types = ActionsDefineCellTypes(
+            parent=self,
+            name = "Define cell types",
+            toolip = "Allows to define cell types from a file", 
+            action = "self.perform",
+        )
+        self.actions[ "actions_define_cell_types" ] = actions_define_cell_types
     
     def default_traits_view( self ):
         """Description of default view.
@@ -547,6 +559,7 @@ class CompartmentEditorWindow( CompartmentWindow ):
                     self.actions[ "actions_add_membrane" ],
                     self.actions[ "actions_clean_voronoi" ],
                     self.actions[ "actions_calculate_average_expression" ],
+                    self.actions[ "actions_define_cell_types" ],
                     name = '&Actions',
                 ),
                 MenuManager(
@@ -554,10 +567,10 @@ class CompartmentEditorWindow( CompartmentWindow ):
                     name = '&View',
                 ),
             ),
-            ## defining toolbar content
-            #toolbar= ToolBarManager(
-            #    file_load_background_image,
-            #),
+            # defining toolbar content
+            toolbar= ToolBarManager(
+                self.actions[ "file_load_background_image" ],
+            ),
         )
         return view
                         

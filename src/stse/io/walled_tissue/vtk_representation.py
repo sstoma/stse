@@ -172,6 +172,7 @@ def copy_cell_properties_from_wt_to_voronoi( wt, voronoi, properties ):
         try:
             for j in voronoi:
                 if j.cell_id != -1:
+                    #print wt._cell2properties[j.cell_id]
                     j.__setattr__( i, wt.cell_property(j.cell_id, i) )
         except TraitError:
             print " !: problem while synchronising wt->voronoi:", i

@@ -64,6 +64,7 @@ from openalea.stse.tools.emergency import kill_close_points
 from openalea.stse.tools.convex_hull import int_points_in_polygon
 from openalea.stse.structures.algo.walled_tissue import \
     calculate_cell_surface
+from openalea.stse.tools.convex_hull import int_points_in_polygon, xy_minimal_bounding_box_of_polygon
 
 # ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
 
@@ -543,4 +544,103 @@ class ActionsUpdateVoronoiEdges(MyAction):
         """ Performs the action. """
         a = self._application
         a.update_vtk_from_voronoi( render_scene=True )
-    
+        
+        
+class ActionsDefineCellTypes(MyAction):
+    cell_type = Str("B")
+    filename = Str("")
+    load_filename = Button( label='Select file' )
+
+
+    def __init__(self, **kwargs):
+        """Init"""
+        super(ActionsDefineCellTypes, self).__init__( **kwargs )
+        #self.expression_name = Enum( kwargs["cell_properties"].keys() )
+        
+    def perform_calc(self):
+        """Calculate average expression level based on the image.""" 
+        a = self._application
+        t = a._voronoi_wt
+        
+        # checking if there is one cell or more
+        if len( t.cells() ) == 0:
+            print " !: Add more voronoi centers to have non empty mesh"
+            return
+        #ir  = tvtk.ImageReader()
+        #ir.file_name = self.filename
+        #image = tvtk.ImageActor()
+        #image.input = ir.output
+
+        synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
+        vc2cell_type = {}
+        for i in a._voronoi_center_list:
+            vc2cell_type[ i.cell_id ] = i.cell_type
+        
+        
+        engine = mlab.get_engine()
+        image_reader = engine.open( self.filename )
+        img = ImageActor()
+        engine.add_filter(img, image_reader)
+        
+        #i = t.cells()[ 0 ]
+        for i in t.cells():
+            cs = t.cell2wvs( i )
+            cs_pos = map( t.wv_pos, cs)
+            pl = int_points_in_polygon( cs_pos )
+            exp = 0.
+            for j in pl:
+                ind = img.actor.input.find_point(j[0], j[1], 0)
+                d = img.actor.input.point_data.scalars[ ind ]
+                try: exp += d[ 0 ] + d[ 1 ] + d[ 2 ]
+                except TypeError: exp += d 
+                if exp > 0: break
+            if exp > 0:    
+                t.cell_property( i, "cell_type", self.cell_type )
+            else:
+                t.cell_property( i, "cell_type",  vc2cell_type[ i ] )
+        
+
+        copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, ['cell_type'])
+
+    def default_traits_view( self ):
+        """Description of default view.
+        """
+        view = \
+        View(
+            VGroup(
+                #Item(
+                #    "expression_name",
+                #    #editor=InstanceEditor(),
+                #    style='simple',
+                #),
+                Item(
+                    "cell_type",
+                    label = "Cell type",
+                ),
+                HGroup(
+                    Item(
+                        "filename"
+                    ),
+                    Item(
+                        "load_filename"
+                    ),
+                ),
+                Item(
+                    "perform_btn",
+                    show_label = False,               
+                ),
+                show_border = True,
+                label = 'Define cell types',
+            ),
+        )
+        return view
+
+    def _load_filename_fired( self ):
+        """Runs default action.
+        """
+        a = self._application
+        dlg = FileDialog( action='open',
+                wildcard='*', title="Load binary image")
+        
+        if dlg.open() == OK:
+            self.filename = dlg.path
