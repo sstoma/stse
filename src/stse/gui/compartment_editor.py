@@ -239,6 +239,7 @@ class ActionsCalculateAverageExpression(MyAction):
     red_channel = Bool(True)
     green_channel = Bool(True)
     blue_channel = Bool(True)
+    use_surface = Bool(False)
 
     def __init__(self, **kwargs):
         """Init"""
@@ -279,9 +280,11 @@ class ActionsCalculateAverageExpression(MyAction):
                         exp += d[ 2 ]
                 except TypeError:
                     exp += d
-                    
-            surf  = calculate_cell_surface( t, i )
-            t.cell_property( i, self.expression_name, exp / surf)
+            
+            if self.use_surface:        
+                surf  = calculate_cell_surface( t, i )
+                t.cell_property( i, self.expression_name, exp / surf)
+            else: t.cell_property( i, self.expression_name, exp / len(pl))
         
         synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
         copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, [self.expression_name])
@@ -310,6 +313,9 @@ class ActionsCalculateAverageExpression(MyAction):
                 ),
                 Item(
                     "blue_channel"
+                ),
+                Item(
+                    "use_surface"
                 ),
                 Item(
                     "perform_btn",

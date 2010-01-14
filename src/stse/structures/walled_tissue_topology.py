@@ -33,7 +33,7 @@ import copy
 from ..tools.misc import find_edge_order, find_edges_order
 import openalea.plantgl.all as pgl
 from  algo.walled_tissue_topology import create_shapes_for_new_cells
-from networkx import single_source_shortest_path
+from networkx import single_source_shortest_path, NetworkXError
 
 ## BEGIN pickle visual vectors
 #import visual
@@ -290,9 +290,14 @@ class TissueTopology:
         for wv in wv2del:
             self._remove_wv( wv )
         
-        for wv_edge in wv_edge2del:
-            self._wvs.delete_edge( wv_edge[ 0 ], wv_edge[ 1 ] )
-
+        try:
+            for wv_edge in wv_edge2del:
+                self._wvs.delete_edge( wv_edge[ 0 ], wv_edge[ 1 ] )
+        except NetworkXError:
+            pass
+            # there was a recent change in the API of networkX 01/01/2010
+            #print " !: possible problem with removing cell"
+        
         for wv in self.cell2wvs( cell ):
             #try:
             #    self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )

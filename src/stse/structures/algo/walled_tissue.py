@@ -281,5 +281,20 @@ def clear_incorrect_neighborhood( wt=None ):
                 wt._cells.delete_edge(i,j)
                 
 
+def avg_cell_property( wt=None, property=None, property_filter=None, property_filter_value=None ):
+    """Returns avg. cell property for a 
     
+    <Long description of the function functionality.>
     
+    :parameters:
+        arg1 : `WalledTissue`
+            tissue to be cleaned.
+    :raise Exception: <Description of situation raising `Exception`>
+    """    
+    mem = 0.
+    mem_val = 0.
+    for i in window._voronoi_wt.cells():
+        if window._voronoi_wt.cell_property(i, "cell_type") == "C":
+            mem += 1
+            mem_val += window._voronoi_wt.cell_property(i, "custom_cell_property1")
+
