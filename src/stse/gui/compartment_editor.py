@@ -245,6 +245,36 @@ class ActionsCalculateAverageExpression(MyAction):
         """Init"""
         super(ActionsCalculateAverageExpression, self).__init__( **kwargs )
         #self.expression_name = Enum( kwargs["cell_properties"].keys() )
+    
+    
+    def calculate_expression_in_cell( self, cell):
+        """Caluculates average expression in given cell"""
+        a = self._application
+        t = a._voronoi_wt
+        cs = t.cell2wvs( cell )
+        cs_pos = map( t.wv_pos, cs)
+        pl = int_points_in_polygon( cs_pos )
+        exp = 0.
+        for j in pl:
+            ind = a._bg_image.actor.input.find_point(j[0], j[1], 0)
+            d = a._bg_image.actor.input.point_data.scalars[ ind ]
+            try:
+                if self.green_channel:
+                    exp += d[ 0 ]
+                if self.red_channel:
+                    exp += d[ 1 ]
+                if self.blue_channel:
+                    exp += d[ 2 ]
+            except TypeError:
+                exp += d
+        
+        if self.use_surface:        
+            surf  = calculate_cell_surface( t, cell )
+            return cell, self.expression_name, exp / surf
+        else: return cell, self.expression_name, exp / len(pl)
+
+    
+        
         
     def perform_calc(self):
         """Calculate average expression level based on the image.""" 
@@ -262,30 +292,18 @@ class ActionsCalculateAverageExpression(MyAction):
         
         t.init_cell_property( self.expression_name, a.cell_properties[ self.expression_name ] )
         
-        #i = t.cells()[ 0 ]
-        for i in t.cells():
-            cs = t.cell2wvs( i )
-            cs_pos = map( t.wv_pos, cs)
-            pl = int_points_in_polygon( cs_pos )
-            exp = 0.
-            for j in pl:
-                ind = a._bg_image.actor.input.find_point(j[0], j[1], 0)
-                d = a._bg_image.actor.input.point_data.scalars[ ind ]
-                try:
-                    if self.green_channel:
-                        exp += d[ 0 ]
-                    if self.red_channel:
-                        exp += d[ 1 ]
-                    if self.blue_channel:
-                        exp += d[ 2 ]
-                except TypeError:
-                    exp += d
-            
-            if self.use_surface:        
-                surf  = calculate_cell_surface( t, i )
-                t.cell_property( i, self.expression_name, exp / surf)
-            else: t.cell_property( i, self.expression_name, exp / len(pl))
-        
+        try:
+            #TODO: add searching for nb. of proc.
+            limit = 8
+            import pprocess
+            results = pprocess.pmap(self.calculate_expression_in_cell, t.cells(), limit=limit)
+            for i in results:
+                t.cell_property( i[0], i[1], i[2] )
+        except Exception:
+            print " #: Waning: not using multiple cores. Verify python-pprocess installation.."
+            for i in t.cells():
+                j = self.calculate_expression_in_cell( i )
+                t.cell_property( j[0], j[1], j[2] )
         synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
         copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, [self.expression_name])
         
