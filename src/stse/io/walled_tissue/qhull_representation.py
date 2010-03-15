@@ -108,7 +108,7 @@ def read_qhull2walled_tissue( voronoi_centers, voronoi_edges, tissue_properties=
     wt.init_cell_property( "was_inf", False )
     wt.init_cell_property( "voronoi_center", (0.,0.,0.) )
     create(wt, wv2pos=wv2pos, cell2wv_list=cell2wv_list)
-    print wt.cells()
+    #print wt.cells()
     
     for i in inf_cells:
         wt.cell_property( i, "was_inf", True )

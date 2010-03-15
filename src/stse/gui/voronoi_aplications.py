@@ -45,6 +45,7 @@ from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
 from enthought.mayavi import mlab
 from enthought.mayavi.sources.vtk_data_source import VTKDataSource
 from enthought.mayavi.modules.image_actor import ImageActor
+from enthought.persistence.file_path import FilePath
 
 from vtk.util import colors
 
@@ -246,11 +247,13 @@ These interactions are redefined for this application:
 <li>To move a voronoi center, select it with 'p' key, press left mouse button and move the selection to the desired location. After releasing the left mouse button voronoi center position will be changed.
 </ul>
 
+The Voronoi diagram is created only for centers inside given insets. These insets are set automatically while the background image is loaded or manually using the "View/Cut plane ON/OFF".
+
 <h2>Editing properties:</h2>
 <ul>
-<li>Sample tab: contains sample traitUI properties.
-<li>All points tab: Allows to change the size of all actors.
-<li>Selected point tab: Allows to change a name and a color of a sphere actor. NOTE: second bar must be used to change color (and enen then color will be refreshed only after changing view in 3D window).
+<li>Action tab: contains details of the selected action. Actions are changed by choosing them from the Actions menu.
+<li>Visualization: Allows to change different properties of the visualisation. Actor size and color mapping for mesh cells are the most important among them.
+<li>Selected center tab: Allows to change a name and a color of a sphere actor. NOTE: second bar must be used to change color (and enen then color will be refreshed only after changing view in 3D window).
 <li>Help tab: Displays the information about application interface.
 </ul>
 
@@ -285,6 +288,7 @@ These interactions are redefined for this application:
     _help = HTML(__doc__)    
     scene_model = Instance( MlabSceneModel, () )
     _bg_image = Instance( ImageActor, () )
+    _bg_image_reader = Any()
     _bw = Instance( tvtk.SphereWidget, () )
     ## not displayed application internals
     _voronoi_center_list = []
@@ -483,23 +487,38 @@ These interactions are redefined for this application:
 class FileLoadBackgroundImage(MyAction):
     def perform(self):
         """Pops up a dialog used to load a background image."""
-        a = self._application
         extns = ['*.bmp','*.png','*.tif','*.jpg','*']
         dlg = FileDialog( action='open',
                 wildcard='*', title="Load image")
         
         if dlg.open() == OK:
-            engine = mlab.get_engine()
-            image_reader = engine.open( dlg.path )
-            a._bg_image = ImageActor()
-            engine.add_filter(a._bg_image, image_reader)
-            (x1,x2) = a._bg_image.actor.x_range
-            (y1,y2) = a._bg_image.actor.y_range
-            if a.actions.has_key( "action_add_voronoi_centers" ):
-                act = a.actions[ "action_add_voronoi_centers" ]
-                a._cut_plane.place_widget(x1,x2,y1,y2,0.,0.)
-                act.voronoi_centers_limit_left_bottom_position = (x1,y1)
-                act.voronoi_centers_limit_right_top_position = (x2,y2)
+            self.load_image( dlg.path )
+                
+    def load_image( self, file_name ):
+        """Loads image to GUI"""
+        a = self._application
+        engine = mlab.get_engine()
+        if not a._bg_image_reader:
+            a._bg_image_reader = engine.open( file_name )
+            a._bg_image = mlab.pipeline.image_actor( a._bg_image_reader )
+        else:
+            a._bg_image.remove()
+            a._bg_image_reader.remove()
+            a._bg_image_reader = engine.open( file_name )
+            a._bg_image = mlab.pipeline.image_actor( a._bg_image_reader )
+            #a._bg_image_reader.file_path = FilePath( file_name )
+        a._bg_image.module_manager.scalar_lut_manager.lut_mode = 'gray'
+        
+        #engine.add_filter(a._bg_image, image_reader)
+        (x1,x2) = a._bg_image.actor.x_range
+        (y1,y2) = a._bg_image.actor.y_range
+        if a.actions.has_key( "action_add_voronoi_centers" ):
+            act = a.actions[ "action_add_voronoi_centers" ]
+            a._cut_plane.place_widget(x1,x2,y1,y2,0.,0.)
+            act.voronoi_centers_limit_left_bottom_position = (x1,y1)
+            act.voronoi_centers_limit_right_top_position = (x2,y2)
+        return a._bg_image_reader
+        
 
 
 class FileLoadWalledTissue(MyAction):
@@ -566,41 +585,48 @@ class ActionsDefineCellTypes(MyAction):
         if len( t.cells() ) == 0:
             print " !: Add more voronoi centers to have non empty mesh"
             return
-        #ir  = tvtk.ImageReader()
-        #ir.file_name = self.filename
-        #image = tvtk.ImageActor()
-        #image.input = ir.output
+
 
         synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-        vc2cell_type = {}
+        self.vc2cell_type = {}
         for i in a._voronoi_center_list:
-            vc2cell_type[ i.cell_id ] = i.cell_type
+            self.vc2cell_type[ i.cell_id ] = i.cell_type
         
+        try:
+            #TODO: add searching for nb. of proc.
+            limit = 8
+            import pprocess
+            results = pprocess.pmap(self.define_cell_type, t.cells(), limit=limit)
+            for i in results:
+                t.cell_property( i[0], i[1], i[2] )
+        except Exception:
+            print " #: Waning: not using multiple cores. Verify python-pprocess installation.."
+            for i in t.cells():
+                j = self.define_cell_type( i )
+                t.cell_property( j[0], j[1], j[2] )
         
-        engine = mlab.get_engine()
-        image_reader = engine.open( self.filename )
-        img = ImageActor()
-        engine.add_filter(img, image_reader)
-        
-        #i = t.cells()[ 0 ]
-        for i in t.cells():
-            cs = t.cell2wvs( i )
-            cs_pos = map( t.wv_pos, cs)
-            pl = int_points_in_polygon( cs_pos )
-            exp = 0.
-            for j in pl:
-                ind = img.actor.input.find_point(j[0], j[1], 0)
-                d = img.actor.input.point_data.scalars[ ind ]
-                try: exp += d[ 0 ] + d[ 1 ] + d[ 2 ]
-                except TypeError: exp += d 
-                if exp > 0: break
-            if exp > 0:    
-                t.cell_property( i, "cell_type", self.cell_type )
-            else:
-                t.cell_property( i, "cell_type",  vc2cell_type[ i ] )
-        
-
         copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, ['cell_type'])
+
+    def define_cell_type( self, cell ):
+        a = self._application
+        t = a._voronoi_wt
+        img = a._bg_image
+        cs = t.cell2wvs( cell )
+        cs_pos = map( t.wv_pos, cs)
+        pl = int_points_in_polygon( cs_pos )
+        exp = 0.
+        for j in pl:
+            ind = img.actor.input.find_point(j[0], j[1], 0)
+            d = img.actor.input.point_data.scalars[ ind ]
+            try: exp += d[ 0 ] + d[ 1 ] + d[ 2 ]
+            except TypeError: exp += d 
+            if exp > 0: break
+        if exp > 0:    
+            t.cell_property( cell, "cell_type", self.cell_type )
+            return cell, "cell_type", self.cell_type
+        else:
+            t.cell_property( cell, "cell_type",  self.vc2cell_type[ cell ] )
+            return cell, "cell_type", self.vc2cell_type[ cell ]
 
     def default_traits_view( self ):
         """Description of default view.
@@ -617,14 +643,14 @@ class ActionsDefineCellTypes(MyAction):
                     "cell_type",
                     label = "Cell type",
                 ),
-                HGroup(
-                    Item(
-                        "filename"
-                    ),
-                    Item(
-                        "load_filename"
-                    ),
-                ),
+                #HGroup(
+                #    Item(
+                #        "filename"
+                #    ),
+                #    Item(
+                #        "load_filename"
+                #    ),
+                #),
                 Item(
                     "perform_btn",
                     show_label = False,               

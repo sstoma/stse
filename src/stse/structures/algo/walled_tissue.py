@@ -281,7 +281,7 @@ def clear_incorrect_neighborhood( wt=None ):
                 wt._cells.delete_edge(i,j)
                 
 
-def avg_cell_property( wt=None, property=None, property_filter=None, property_filter_value=None ):
+def avg_cell_property( wt=None, property=None, property_filter=None, property_filter_value=None, consider_surface=False ):
     """Returns avg. cell property for a 
     
     <Long description of the function functionality.>
@@ -293,8 +293,15 @@ def avg_cell_property( wt=None, property=None, property_filter=None, property_fi
     """    
     mem = 0.
     mem_val = 0.
-    for i in window._voronoi_wt.cells():
-        if window._voronoi_wt.cell_property(i, "cell_type") == "C":
-            mem += 1
-            mem_val += window._voronoi_wt.cell_property(i, "custom_cell_property1")
-
+    for i in wt.cells():
+        if wt.cell_property(cell=i, property=property_filter) == property_filter_value:
+            if not consider_surface:
+                mem_val += wt.cell_property(i, property)
+                mem += 1
+            else:
+                s = calculate_cell_surface( wt, cell=i)
+                mem_val += wt.cell_property(i, property) / s
+    if not consider_surface:
+        if mem > 0: return mem_val / mem
+        else: return 0.
+    else:  return mem_val

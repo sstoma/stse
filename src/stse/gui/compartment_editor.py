@@ -387,26 +387,29 @@ class FileSaveWalledTissue(MyAction):
         dlg = FileDialog( action='save as',
                 wildcard='*', title="Save WalledTissue")
         
-        if dlg.open() == OK:
-            t = a._voronoi_wt
-            
-            # kill double voronoi
-            kill_close_points(a._voronoi_center_list, 0.1)
-            
-            #updates the WalledTissue properties with voronoi centers
-            synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-            copy_cell_properties_from_voronoi_to_wt( a._voronoi_wt, \
-                a._voronoi_center_list, a.cell_properties )
-            
-            ovc = []
-            for i in a._voronoi_center_list:
-                if i.cell_id != -1 :
-                    t.cell_property( i.cell_id, "voronoi_center", i.position)
-                else:
-                    ovc.append(i.position)
-            t.tissue_property( "outside_voronoi_centers", ovc )
-            
-            saved_tissue = write_walled_tissue( tissue=a._voronoi_wt, name=dlg.path, desc="Test tissue" )
+        if dlg.open() == OK: self.save( dlg.path )
+    
+    def save( self, file_name):
+        a = self._application
+        t = a._voronoi_wt
+        
+        # kill double voronoi
+        kill_close_points(a._voronoi_center_list, 0.1)
+        
+        #updates the WalledTissue properties with voronoi centers
+        synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
+        copy_cell_properties_from_voronoi_to_wt( a._voronoi_wt, \
+            a._voronoi_center_list, a.cell_properties )
+        
+        ovc = []
+        for i in a._voronoi_center_list:
+            if i.cell_id != -1 :
+                t.cell_property( i.cell_id, "voronoi_center", i.position)
+            else:
+                ovc.append(i.position)
+        t.tissue_property( "outside_voronoi_centers", ovc )
+        
+        saved_tissue = write_walled_tissue( tissue=a._voronoi_wt, name=file_name, desc="Test tissue" )
 
 
 # ------------------------------------------------------------------ APPLICATION
@@ -732,7 +735,8 @@ def start_gui():
     window.edit_traits()
     window.do()
     GUI().start_event_loop()
+    return window
 
 if __name__ == '__main__':
-    start_gui()
+    window = start_gui()
         
