@@ -46,14 +46,14 @@ stse_path = os.getenv("STSE_DIR")
 # we initialize the tissue using the data read from
 # .dat file Specification can be found in the stsf
 # documentation
-wt = read_dat2walled_tissue( filename = stse_path+"/data/2cellTest/2cellTest.dat", tissue_properties = wtc)
+wt = read_dat2walled_tissue( filename = stse_path+"/data/09-05-01-2cellTest/2cellTest.dat", tissue_properties = wtc)
 
 # setting physiological information
 
 # read links from .link file
 # .link file Specification can be found in the stse
 # documentation
-links = read_link_file( link_fn = stse_path+"/data/2cellTest/2cellTest.link")
+links = read_link_file( link_fn = stse_path+"/data/09-05-01-2cellTest/2cellTest.link")
 
 for (i,j) in links:
     try:
