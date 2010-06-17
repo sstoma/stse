@@ -19,6 +19,7 @@ from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, \
     HSplit, InstanceEditor
 from numpy import array
 import numpy as np
+import os
 
 import scipy
 import scipy.integrate.odepack

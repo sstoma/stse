@@ -13,13 +13,17 @@ import sys
 import copy
 import time
 import os.path
+import os
 
 if __name__ == '__main__':
 
     
     window = start_gui()
     #exchange it with your data pointing to schmoo example
-    data_dir ="/home/sstoma/src/stse/data/10-04-27-schmoo"
+    # please adjust the path to access the files from data directory of stsf
+    # project
+    stse_path = os.getenv("STSE_DIR")
+    data_dir =stse_path+"/data/10-04-27-schmoo"
     expression_data_files = [
         "schmoo-0",
     ]
