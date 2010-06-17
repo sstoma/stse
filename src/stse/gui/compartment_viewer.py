@@ -319,6 +319,7 @@ def start_gui():
     window.edit_traits()
     window.do()
     GUI().start_event_loop()
+    return window
 
 if __name__ == '__main__':
     start_gui() 

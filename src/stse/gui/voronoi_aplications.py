@@ -108,7 +108,7 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
     """Represents the cell center of a cell.
     """
     cell_center_color = Color()
-    cell_type = Enum("A","B","C","D","E")
+    cell_type = Enum("A","B","C","D","E","F","G","H","I")
     custom_cell_property1 = Float(0.)
     custom_cell_property2 = Float(0.)
     custom_cell_property3 = Float(0.)
@@ -156,6 +156,14 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
             self.property.color = colors.black
         elif self.cell_type == "E":
             self.property.color = colors.pink    
+        elif self.cell_type == "F":
+            self.property.color = colors.banana    
+        elif self.cell_type == "G":
+            self.property.color = colors.brown   
+        elif self.cell_type == "H":
+            self.property.color = colors.green   
+        elif self.cell_type == "I":
+            self.property.color = colors.azure 
 
 def general_voronoi_factory( center=(0, 0, 0), radius=0.1, resolution=16,
                      color=colors.white, opacity=1.0, **kwargs):
@@ -461,7 +469,7 @@ The Voronoi diagram is created only for centers inside given insets. These inset
             self._voronoi_vtk_ds = VTKDataSource(data=self._voronoi_vtk)
             engine = mlab.get_engine()
             engine.add_source( self._voronoi_vtk_ds ) 
-            self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity=0.25)
+            self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity=0.99)
             self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds),
                                     color=(0, 0, 0), )
         else:
