@@ -372,8 +372,11 @@ def read_walled_tissue( file_name=None, const=None ):
         #print wt.const.tissue_properties, wtpr.tissue_properties
         for i in wt.const.tissue_properties.keys():
                 wt.tissue_property( i, wtpr.tissue_properties[ i ] )
-        
-        return wt
+	#print " # wt.const.cell_properties:", wt.const.cell_properties
+	#print " # wt._cell2properties[0]:", wt._cell2properties[0]
+	#print " # wt._tissue_properties:", wt._tissue_properties
+	#print " # wt.const.tissue_properties:", wt.const.tissue_properties
+	return wt
 
 class WalledTissuePickleWriter ( TissuePickleWriter ):
 	def __init__ (self, tissuename, mode="w",

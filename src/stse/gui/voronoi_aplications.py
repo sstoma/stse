@@ -331,7 +331,7 @@ The Voronoi diagram is created only for centers inside given insets. These inset
                 self.voronoi_center_size])
         self.scene_model.render()
 
-
+    
     def remove_all_voronoi_centers( self, update_vtk_from_voronoi=False ):
         self.remove_voronoi_centers( self._voronoi_center_list, update_vtk_from_voronoi=False )
         self.select_voronoi_center( None )
@@ -456,10 +456,20 @@ The Voronoi diagram is created only for centers inside given insets. These inset
             
         if render_scene: self._voronoi_vtk_ds.update()  
 
-
+    @on_trait_change('_cell_scalars_active')
+    def update_colormap( self, render_scene = True, voronoi_changed=True):
+        if self._cell_scalars_active:
+            if self._cell_scalars_active_name in self.cell_properties.keys():
+                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
+                if render_scene: self.scene_model.render()
+    
     def update_vtk_from_voronoi( self, render_scene = True, voronoi_changed=False ):
         # TODO
+        #print 4,self._voronoi_wt.const.cell_properties
+        #print 4,self._voronoi_wt._cell2properties[0]
         d = walled_tissue2vtkPolyData( self._voronoi_wt )
+        #print 3,self._voronoi_wt.const.cell_properties
+        #print 3,self._voronoi_wt._cell2properties[0]
         self._voronoi_vtk = d["tissue"]
         self._cell_id_vtk2wt = d["cell_id_vtk2wt"]
         self._cell_id_wt2vtk = d["cell_id_wt2vtk"]
@@ -559,9 +569,11 @@ class FileLoadWalledTissue(MyAction):
             synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
             copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
                 a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
-            
-            
-            a.update_vtk_from_voronoi()
+            #print 1,a._voronoi_wt.const.cell_properties
+            #print 1,a._voronoi_wt._cell2properties[0]
+            a.update_vtk_from_voronoi(voronoi_changed = False)
+            #print 2,a._voronoi_wt.const.cell_properties
+            #print 2,a._voronoi_wt._cell2properties[0]
 
 #----------------------------------------------------------------------------- SHARED ACTIONS
     
@@ -608,7 +620,7 @@ class ActionsDefineCellTypes(MyAction):
             for i in results:
                 t.cell_property( i[0], i[1], i[2] )
         except Exception:
-            print " #: Waning: not using multiple cores. Verify python-pprocess installation.."
+            print " #: Warning: not using multiple cores. Verify python-pprocess installation.."
             for i in t.cells():
                 j = self.define_cell_type( i )
                 t.cell_property( j[0], j[1], j[2] )
