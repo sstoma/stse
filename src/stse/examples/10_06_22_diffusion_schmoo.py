@@ -31,14 +31,14 @@ class DiffusionAction:
 
     def __init__(self, window = None):
         self.t = 0.
-        self.h = 0.1
+        self.h = 1.
         self.c_change = -np.inf #acceptable change could not be smaller to classifie as error.
-        self.c_max_steps = 1000 #maximum number of steps
+        self.c_max_steps = 2000 #maximum number of steps
         
                 
         self.c_alpha = 0.01 #creation of FUS3
-        self.c_beta = 0.01 #decay of FUS3
-        self.c_gamma = 1. # FUS3 diffusion const.
+        self.c_beta = 0.001 #decay of FUS3
+        self.c_gamma = 50. # FUS3 diffusion const.
 
         
         self.rtol = 0.0001
@@ -46,7 +46,7 @@ class DiffusionAction:
         
         #self.c_initial_A_value=self.c_alpha/self.c_beta
         
-        self.capture_period = 1.
+        self.capture_period = 10.
         self.frame = 0
         self._last_capture_time = self.t
         
@@ -91,7 +91,7 @@ class DiffusionAction:
             if self.t > self._last_capture_time + self.capture_period:
                 self._last_capture_time = self.t
                 self.window.display_tissue_scalar_properties(property=self.window._cell_scalars_active_name)
-                #self.window.scene_model.save_png("%.4d.png"%self.frame)
+                self.window.scene_model.save_png("%.4d.png"%self.frame)
                 t.tissue_property("time", self.t)
                 #saved_tissue = write_walled_tissue( tissue=t, name="%.4d"%self.frame, desc="Step"+str(self.frame) )
                 self.frame+=1
@@ -146,7 +146,6 @@ class DiffusionAction:
         
         t = self.wt
         x2 = np.zeros_like( x )
-        cAMP_total = 0.
         for i in t.cells():
             ct = t.cell_property( cell=i, property= "cell_type" )
             
@@ -211,10 +210,11 @@ if __name__ == '__main__':
     # clearing the FUS3 readout
     for i in mesh.cells():
         mesh.cell_property(i,  "custom_cell_property1", 0.)
+
     
-    window._cell_scalars_active = True    
     window._cell_scalars_active_name = "custom_cell_property1"
-    window._cell_scalars_dynamic=True
-    #window._cell_scalars_range[1]=.8
+    window._cell_scalars_dynamic=False
+    window._cell_scalars_active = True    
+    window._cell_scalars_range[1]=0.065
     
     da = DiffusionAction( window = window )

@@ -305,6 +305,20 @@ class CompartmentViewerWindow( CompartmentWindow ):
         
         self.scene_model.anti_aliasing_frames = 0
 
+    def update_colormap( self, render_scene = True, voronoi_changed=False):
+        if self._cell_scalars_active:
+            if self._cell_scalars_active_name in self.cell_properties.keys():
+                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
+                if render_scene: self.scene_model.render()
+
+    @on_trait_change('_cell_scalars_active')
+    def update_colormap_on_cell_scalars_active_change( self, render_scene = True, voronoi_changed=False):
+        if self._cell_scalars_active:
+            if self._cell_scalars_active_name in self.cell_properties.keys():
+                # to workaround the bug in Traits voronoi_changed has to be set to False not with the default option but explicitly
+                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=False )
+                if render_scene: self.scene_model.render()
+
 
 def mesh_viewing():
     returnCompartmentViewerWindow()

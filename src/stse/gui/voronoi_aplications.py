@@ -422,6 +422,7 @@ The Voronoi diagram is created only for centers inside given insets. These inset
 
     def display_tissue_scalar_properties( self, property, render_scene=True, voronoi_changed=False ):
         if voronoi_changed:
+            print "voronoi changed"
             #updates the WalledTissue properties with voronoi centers
             synchronize_id_of_wt_and_voronoi(self._voronoi_wt, self._voronoi_center_list)
             copy_cell_properties_from_voronoi_to_wt( self._voronoi_wt, \

@@ -7,13 +7,14 @@ stse_svn_revision = 54
 from openalea.stse.gui.compartment_viewer import start_gui
 from openalea.stse.structures.algo.walled_tissue import avg_cell_property
 from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface,\
-    calculate_wall_length, cell_edge2wv_edge, cell_centers
+    calculate_wall_length, cell_edge2wv_edge, cell_centers, cell_center
 
 import sys
 import copy
 import time
 import os.path
 import os
+from matplotlib.pyplot import scatter, legend, show, figure
 
 if __name__ == '__main__':
 
@@ -61,6 +62,30 @@ if __name__ == '__main__':
     print "# Example 1 (expression signal in different compartments):"
     for i in expression_channels2cell_types.keys():
         print '  Average expression in', cell_type2biological_name[ expression_channels2cell_types[ i ] ], avg_cell_property(wt=mesh, property="custom_cell_property1", property_filter="cell_type", property_filter_value=expression_channels2cell_types[ i ], consider_surface=False)
+    
+    # making a profile plot    
+    x = []
+    y = []
+    for i in mesh.cells():
+        if mesh.cell_property(i, "cell_type") == "B":
+            x.append(cell_center(mesh,i)[0])
+            y.append(mesh.cell_property(i, "custom_cell_property1"))
+    scatter(x,y,c='r',hold=True)
+    x2 = []
+    y2= []
+    z2 = []
+    for i in mesh.cells():
+        if mesh.cell_property(i, "cell_type") == "C":
+            x2.append(cell_center(mesh,i)[0])
+            y2.append(mesh.cell_property(i, "custom_cell_property1"))
+            z2.append(cell_center(mesh,i)[1])
+    scatter(x2,y2,c='b',hold=True)
+    legend( ('Expression in cyt.', 'Expression in nuc.') )
+    show()
+    figure()
+    scatter(x2,z2,hold=False)
+    show()
+    print "# Profile through a cell.. DONE"
     
     print "# Example 2 (geometrical properties of the mesh - in pixels):"
     
@@ -121,3 +146,5 @@ if __name__ == '__main__':
     ar = len(mesh.cells())
     print "  Removed ", br-ar, "compartments. Current number of compartiments: ", ar 
     window.update_vtk_from_voronoi()
+    window._cell_scalars_active = True
+    #window.update_colormap( render_scene = True, voronoi_changed=True)
