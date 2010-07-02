@@ -134,6 +134,8 @@ if __name__ == '__main__':
             nc += 1
     print "  Average number of each compartment neighbours in the nucleus:", nbr_nei / float(nc)
     
+    assert False
+    
     print "# Example 4 (manipulating tissue):"
     # changing cell_types
     for i in mesh.cells():
