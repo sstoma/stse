@@ -91,7 +91,7 @@ class DiffusionAction:
             if self.t > self._last_capture_time + self.capture_period:
                 self._last_capture_time = self.t
                 self.window.display_tissue_scalar_properties(property=self.window._cell_scalars_active_name)
-                self.window.scene_model.save_png("%.4d.png"%self.frame)
+                #self.window.scene_model.save_png("%.4d.png"%self.frame)
                 t.tissue_property("time", self.t)
                 #saved_tissue = write_walled_tissue( tissue=t, name="%.4d"%self.frame, desc="Step"+str(self.frame) )
                 self.frame+=1

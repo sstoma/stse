@@ -63,6 +63,9 @@ if __name__ == '__main__':
     for i in expression_channels2cell_types.keys():
         print '  Average expression in', cell_type2biological_name[ expression_channels2cell_types[ i ] ], avg_cell_property(wt=mesh, property="custom_cell_property1", property_filter="cell_type", property_filter_value=expression_channels2cell_types[ i ], consider_surface=False)
     
+    # calculating the ratio between nucleus/cytoplsm expression
+    print '  Ratio: expression in nucleus/cytoplasm', avg_cell_property(wt=mesh, property="custom_cell_property1", property_filter="cell_type", property_filter_value="C", consider_surface=False) /  avg_cell_property(wt=mesh, property="custom_cell_property1", property_filter="cell_type", property_filter_value="B", consider_surface=False)
+    
     # making a profile plot    
     x = []
     y = []
@@ -79,6 +82,7 @@ if __name__ == '__main__':
             x2.append(cell_center(mesh,i)[0])
             y2.append(mesh.cell_property(i, "custom_cell_property1"))
             z2.append(cell_center(mesh,i)[1])
+            
     scatter(x2,y2,c='b',hold=True)
     legend( ('Expression in cyt.', 'Expression in nuc.') )
     show()
