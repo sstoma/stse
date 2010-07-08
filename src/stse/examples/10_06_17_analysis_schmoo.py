@@ -69,25 +69,27 @@ if __name__ == '__main__':
     # making a profile plot    
     x = []
     y = []
-    for i in mesh.cells():
-        if mesh.cell_property(i, "cell_type") == "B":
-            x.append(cell_center(mesh,i)[0])
-            y.append(mesh.cell_property(i, "custom_cell_property1"))
-    scatter(x,y,c='r',hold=True)
     x2 = []
     y2= []
-    z2 = []
+    for i in mesh.cells():
+        if mesh.cell_property(i, "cell_type") == "B":
+            if cell_center(mesh,i)[1] < 240 or cell_center(mesh,i)[1] >= 260:
+                x.append(cell_center(mesh,i)[0])
+                y.append(mesh.cell_property(i, "custom_cell_property1"))
+            else:
+                x2.append(cell_center(mesh,i)[0])
+                y2.append(mesh.cell_property(i, "custom_cell_property1"))
+    scatter(x,y,c='r',hold=True)
+    scatter(x2,y2,c='g',hold=True)
+    x3 = []
+    y3= []
     for i in mesh.cells():
         if mesh.cell_property(i, "cell_type") == "C":
-            x2.append(cell_center(mesh,i)[0])
-            y2.append(mesh.cell_property(i, "custom_cell_property1"))
-            z2.append(cell_center(mesh,i)[1])
+            x3.append(cell_center(mesh,i)[0])
+            y3.append(mesh.cell_property(i, "custom_cell_property1"))
             
-    scatter(x2,y2,c='b',hold=True)
-    legend( ('Expression in cyt.', 'Expression in nuc.') )
-    show()
-    figure()
-    scatter(x2,z2,hold=False)
+    scatter(x3,y3,c='b',hold=True)
+    legend( ('Fus3PP in cyt. perifery', 'Fus3PP cyt. middle', 'Fus3PP nuc.') )
     show()
     print "# Profile through a cell.. DONE"
     
