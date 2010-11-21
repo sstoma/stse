@@ -21,3 +21,6 @@ __license__="Cecill-C"
 __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
+
+def run():
+    print "No programm..."
