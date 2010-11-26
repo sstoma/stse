@@ -278,7 +278,7 @@ def clear_incorrect_neighborhood( wt=None ):
     for i in wt.cells():
         for j in wt.cell_neighbors( i ):
             if None==cell_edge2wv_edge( wt, cell_edge=(i,j) ):
-                wt._cells.delete_edge(i,j)
+                wt._cells.remove_edge(i,j)
                 
 
 def avg_cell_property( wt=None, property=None, property_filter=None, property_filter_value=None, consider_surface=False ):

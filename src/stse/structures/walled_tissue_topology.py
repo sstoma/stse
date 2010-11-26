@@ -292,7 +292,7 @@ class TissueTopology:
         
         try:
             for wv_edge in wv_edge2del:
-                self._wvs.delete_edge( wv_edge[ 0 ], wv_edge[ 1 ] )
+                self._wvs.remove_edge( wv_edge[ 0 ], wv_edge[ 1 ] )
         except NetworkXError:
             pass
             # there was a recent change in the API of networkX 01/01/2010
@@ -306,7 +306,7 @@ class TissueTopology:
             #    pass
             self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )
         self._cell2wv_list.pop( cell )
-        self._cells.delete_node( cell )
+        self._cells.remove_node( cell )
 
         return {"removed_wv_edges": wv_edge2del, "removed_wv" : wv2del}
 
@@ -388,7 +388,7 @@ class TissueTopology:
         for wv in self.wvs(): 
             if self.wv2cells( wv ) == []:
                 self._wv2cell_list.pop( wv )
-                self._wvs.delete_node( wv )
+                self._wvs.remove_node( wv )
 
     def _remove_wv( self, wv ):
         """Removes the wv from the tissue.
@@ -398,7 +398,7 @@ class TissueTopology:
         for c in self.wv2cells( wv ):
             self.cell2wvs( c, self.cell2wvs( c ).remove( wv ) )
         self._wv2cell_list.pop( wv )
-        self._wvs.delete_node( wv )
+        self._wvs.remove_node( wv )
     
 
 
@@ -519,8 +519,8 @@ class TissueTopology:
             self._exchange_wvs( c, (s1,t1), v1d )
             self._exchange_wvs( c, (s2,t2), v2d )
         
-        self._wvs.delete_edge( s1, t1 )
-        self._wvs.delete_edge( s2, t2 )
+        self._wvs.remove_edge( s1, t1 )
+        self._wvs.remove_edge( s2, t2 )
 
         self._append_cell2wvs( wvc1, c1)
         self._append_cell2wvs( wvc2, c2)
