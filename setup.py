@@ -34,7 +34,7 @@ author_email= ''
 url= 'http://stoma.name/stse/'
 license= 'Cecill-C' 
 
-packages =  [ 'openalea.stse.' + x for x in find_packages('src/stse/') ]
+packages =  [ 'openalea.stse.' + x for x in find_packages('src/stse') ]
 packages.append( 'openalea.stse' )
 print "# Installing packages: ", packages
 
