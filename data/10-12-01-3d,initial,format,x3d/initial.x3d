@@ -186,5 +186,29 @@
 
 </Group>
 
+<ClipPlane DEF='TheClipPlane' />
+<Script DEF='TheScript'
+  url='"kambiscript:
+function translation(value, timestamp)
+  plane := vector(0, 1, 0,  -vector_get(value, 1))
+"'>
+  <field name='translation' type='SFVec3f' accessType='inputOnly'/>
+  <field name='plane' type='SFVec4f' accessType='outputOnly'/>
+</Script>
+<ROUTE fromNode='TheScript' fromField='plane' toNode='TheClipPlane' toField='plane'/>
+
+<Group>
+  <Transform DEF='PlaneSensorVisualize'>
+    <Shape>
+      <Appearance> <Material/> </Appearance>
+      <Box size='2.2 0.2 2.2'/>
+    </Shape>
+  </Transform>
+  <PlaneSensor DEF='ThePlaneSensor' minPosition='0 -10' maxPosition='0 10'/>
+</Group>
+
+<ROUTE fromNode='ThePlaneSensor' fromField='translation_changed' toNode='TheScript' toField='translation'/>
+<ROUTE fromNode='ThePlaneSensor' fromField='translation_changed' toNode='PlaneSensorVisualize' toField='translation'/>
+
 </Scene>
 </X3D>
