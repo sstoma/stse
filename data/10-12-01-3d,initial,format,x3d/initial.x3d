@@ -5,6 +5,7 @@
      xsd:noNamespaceSchemaLocation="http://www.web3d.org/specifications/x3d-3.2.xsd">
 <head>
   <meta name="generator" content="M &amp; S" />
+  <component name="Rendering" level="5" /> <!-- formally needed for ClipPlane -->
 </head>
 <Scene>
 
@@ -200,8 +201,14 @@ function translation(value, timestamp)
 <Group>
   <Transform DEF='PlaneSensorVisualize'>
     <Shape>
-      <Appearance> <Material/> </Appearance>
-      <Box size='2.2 0.2 2.2'/>
+      <Appearance> <Material transparency="0.8" emissiveColor="0.5 0.5 0.5" /> </Appearance>
+      <IndexedFaceSet solid="false" coordIndex="0 1 2 3">
+        <Coordinate point="
+          -2 0.01 -2
+          -2 0.01  2
+           2 0.01  2
+           2 0.01 -2"/>
+      </IndexedFaceSet>
     </Shape>
   </Transform>
   <PlaneSensor DEF='ThePlaneSensor' minPosition='0 -10' maxPosition='0 10'/>
