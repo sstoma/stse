@@ -62,7 +62,7 @@
 <!ENTITY % X3dExtensions "IGNORE">
 <!ENTITY % profileNames "(Core|Interchange|CADInterchange|Interactive|Immersive|Full|MPEG4Interactive)">
 <!ENTITY % componentNames "(Core|CADGeometry|CubeMapTexturing|DIS|EnvironmentalEffects|EnvironmentalSensor|EventUtilities|Followers|Geometry2D|Geometry3D|Geospatial|Grouping|H-Anim|Interpolation|KeyDeviceSensor|Layering|Layout|Lighting|Navigation|Networking|NURBS|PointingDeviceSensor|Rendering|RigidBodyPhysics|Scripting|Shaders|Shape|Sound|Text|Texturing|Texturing3D|Time)">
-<!ENTITY % componentLevels "(1|2|3|4)">
+<!ENTITY % componentLevels "(1|2|3|4|5)">
 <!ENTITY % X3dFieldTypes "SFBool|MFBool|SFColor|MFColor|SFColorRGBA|MFColorRGBA|SFDouble|MFDouble|SFFloat|MFFloat|SFImage|MFImage|SFInt32|MFInt32|SFNode|MFNode|SFRotation|MFRotation|SFString|MFString|SFTime|MFTime|SFVec2f|MFVec2f|SFVec2d|MFVec2d|SFVec3f|MFVec3f|SFVec3d|MFVec3d|SFMatrix3d|MFMatrix3d|SFMatrix3f|MFMatrix3f|SFMatrix4d|MFMatrix4d|SFMatrix4f|MFMatrix4f|SFVec4d|MFVec4d|SFVec4f|MFVec4f">
 <!-- X3D type definitions as DTD types -->
 <!ENTITY % SFBool "(true|false)">
@@ -244,7 +244,7 @@
 <![%InterchangeProfile;[
 <!ENTITY % AppearanceNodes  	" Appearance " >
 
-<!ENTITY % BehaviorLeafNodes	" CoordinateInterpolator|KeySensor|OrientationInterpolator|PositionInterpolator|ScalarInterpolator|TimeSensor|TouchSensor " >
+<!ENTITY % BehaviorLeafNodes	" CoordinateInterpolator|KeySensor|OrientationInterpolator|PositionInterpolator|ScalarInterpolator|TimeSensor|TouchSensor|ClipPlane " >
 
 <!ENTITY % BindableNodes    	" Background|NavigationInfo|Viewpoint " >
 
@@ -270,7 +270,7 @@
 
 <!ENTITY % AppearanceNodes  	" %AppearanceNodeExtensions; Appearance " >
 
-<!ENTITY % BehaviorLeafNodes	" %InterpolatorNodeExtensions; %SensorNodeExtensions; %ScriptNodeExtensions; %GeoBehaviorNodes; %DisplacerNode; %NurbsInterpolators; %EventUtilityNodes;|ColorInterpolator|CoordinateInterpolator|CoordinateInterpolator2D|CylinderSensor|KeySensor|LoadSensor|LocalFog|NormalInterpolator|OrientationInterpolator|PlaneSensor|PositionInterpolator|PositionInterpolator2D|ProximitySensor|ScalarInterpolator|Script|SphereSensor|SquadOrientationInterpolator|StringSensor|TimeSensor|TouchSensor|VisibilitySensor " >
+<!ENTITY % BehaviorLeafNodes	" %InterpolatorNodeExtensions; %SensorNodeExtensions; %ScriptNodeExtensions; %GeoBehaviorNodes; %DisplacerNode; %NurbsInterpolators; %EventUtilityNodes;|ColorInterpolator|CoordinateInterpolator|CoordinateInterpolator2D|CylinderSensor|KeySensor|LoadSensor|LocalFog|NormalInterpolator|OrientationInterpolator|PlaneSensor|PositionInterpolator|PositionInterpolator2D|ProximitySensor|ScalarInterpolator|Script|SphereSensor|SquadOrientationInterpolator|StringSensor|TimeSensor|TouchSensor|VisibilitySensor|ClipPlane " >
 ]]>
 <![%ImmersiveProfile;[
 <!ENTITY % BindableNodes    	" %BindableNodeExtensions; %GeoViewpointNode; Background|Fog|NavigationInfo|TextureBackground|Viewpoint " >
@@ -541,6 +541,16 @@
 	class       CDATA       #IMPLIED
 	DEF  ID        #IMPLIED
 	USE  IDREF     #IMPLIED>
+
+<!ELEMENT ClipPlane ( (IS?), (%MetadataNodes;)? ) >
+<!ATTLIST ClipPlane
+	plane %SFVec4f; "0 1 0 0"
+	enabled %SFBool; "true"
+	containerField NMTOKEN "children"
+	class CDATA #IMPLIED
+	DEF ID #IMPLIED
+	USE IDREF #IMPLIED
+>
 
 <!ELEMENT Collision ( (IS?), (%MetadataNodes;)?, ( %ChildrenNodes;|%WildcardNodes; )* )  >
 <!ATTLIST Collision
@@ -2893,7 +2903,7 @@ vt1|vt2|vt3|vt4|vt5|vt6|vt7|vt8|vt9|vt10|vt11|vt12)" >
 	axis3Angle %SFFloat; "0"
 	axis3Torque %SFFloat; "0"
 	enabledAxes (0|1|2|3) "1"
-	mustOutput%MFString; "NONE"
+	mustOutput %MFString; "NONE"
 	motor1Axis %SFVec3f; "0 0 0"
 	motor2Axis %SFVec3f; "0 0 0"
 	motor3Axis %SFVec3f; "0 0 0"
@@ -2961,7 +2971,7 @@ vt1|vt2|vt3|vt4|vt5|vt6|vt7|vt8|vt9|vt10|vt11|vt12)" >
 	axis %SFVec3f; "0 0 0"
 	maxAngle %SFFloat; "3.1416"
 	minAngle %SFFloat; "-3.1416"
-	mustOutput%MFString; "NONE"
+	mustOutput %MFString; "NONE"
 	stopBounce %SFFloat; "0"
 	stopErrorCorrection %SFFloat; "0.8"
 	containerField NMTOKEN "joints"
@@ -2972,7 +2982,7 @@ vt1|vt2|vt3|vt4|vt5|vt6|vt7|vt8|vt9|vt10|vt11|vt12)" >
 <!ELEMENT SliderJoint (IS?, (%MetadataNodes;)?, (RigidBody | %WildcardNodes;)* )>
 <!ATTLIST SliderJoint
 	axis %SFVec3f; "0 1 0"
-	mustOutput%MFString; "NONE"
+	mustOutput %MFString; "NONE"
 	maxSeparation %SFFloat; "1"
 	minSeparation %SFFloat; "0"
 	stopBounce %SFFloat; "0"
@@ -2987,7 +2997,7 @@ vt1|vt2|vt3|vt4|vt5|vt6|vt7|vt8|vt9|vt10|vt11|vt12)" >
 	anchorPoint %SFVec3f; "0 0 0"
 	axis1 %SFVec3f; "0 0 0"
 	axis2 %SFVec3f; "0 0 0"
-	mustOutput%MFString; "NONE"
+	mustOutput %MFString; "NONE"
 	stop1Bounce %SFFloat; "0"
 	stop1ErrorCorrection %SFFloat; "0.8"
 	stop2Bounce %SFFloat; "0"
