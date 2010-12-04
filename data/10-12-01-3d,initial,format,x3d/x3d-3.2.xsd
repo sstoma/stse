@@ -2462,6 +2462,7 @@ outside of the current view.</xs:appinfo>
 			<xs:element ref="StaticGroup"/>
 			<xs:element ref="CADAssembly"/>
 			<xs:element ref="CADLayer"/>
+			<xs:element ref="ClipPlane"/>
 		</xs:choice>
 	</xs:group>
 	<xs:group name="ChildContentModelDIS">
