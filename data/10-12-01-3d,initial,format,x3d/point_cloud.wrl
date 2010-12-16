@@ -1,0 +1,61 @@
+#VRML V2.0 utf8
+
+# This file was authored with Blender (http://www.blender.org/)
+# Blender version 249
+# Blender file 
+# Exported using VRML97 exporter v1.55 (2006/01/17)
+
+
+NavigationInfo {
+	headlight FALSE
+	visibilityLimit 100.0
+	type ["EXAMINE", "ANY"]
+	avatarSize [0.25, 1.75, 0.75]
+} 
+ 
+Background {
+	groundColor 0.0565629 0.2208154 0.4
+	skyColor 0.0565629 0.2208154 0.4
+}
+
+DEF OB_Plane Transform {
+	translation 1.452854 -2.061089 0.701310
+	rotation 1.000000 0.000000 0.000000 0.000000
+	scale 1.000000 1.000000 1.000000
+	children [
+		DEF ME_Plane_001 Group {
+			children [
+			]
+		}
+	]
+}
+DEF OB_Lamp Transform {
+	translation 4.076245 5.903862 -1.005454
+	rotation 0.205942 0.920698 -0.331517 1.926274
+	scale 1.000000 1.000000 1.000000
+	children [
+		DEF Lamp PointLight {
+			ambientIntensity 0.0
+			color 1.0 1.0 1.0
+			intensity 0.5714286
+			location 0.0 0.0 0.0
+			radius 29.9999828339
+		}
+		
+	]
+}
+DEF OB_Camera Transform {
+	translation 7.481132 5.343665 6.507640
+	rotation 0.772239 0.535848 -0.341341 1.347139
+	scale 1.000000 1.000000 1.000000
+	children [
+		DEF Camera Viewpoint {
+			description "Camera" 
+			position 0.0 0.0 0.0
+			orientation 1.0 0.0 0.0 -1.570796
+			fieldOfView 0.661
+		}
+		
+	]
+}
+
