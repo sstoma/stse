@@ -213,13 +213,11 @@ def calculate_cell_perimiter(wtt, c):
     #print "cell perimiter: ", p
     return p
 
-def calculate_cell_surface( wtt, cell=None, refresh=False ):
+def calculate_cell_surface( wtt, cell=None ):
     """Calculates cell c surface. Surface is created finding the baricenter,
     and adding the surfaces of triangles which are build up with edge (of the cell)
     and its edges to center. With caching.
-    """
-
-        
+    """  
     shape = wtt.cell2wvs( cell )
     wv2pos = wtt._wv2pos
     return calculate_cell_surfaceS( shape, wv2pos )

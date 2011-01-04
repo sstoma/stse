@@ -81,11 +81,8 @@ def initial_find_the_inside_of_tissue( wtt ):
     """Changes the internal cell representation to keep cells with the same
     chirality (L or R). The divide operation *should* keep this property.
     """
-    #print "ic"
-    #raw_input()
-    import sets
     fcell = wtt._cells.nodes()[ 0 ]
-    already_searched = sets.Set()
+    already_searched = set()
     to_search = [fcell]
     already_searched.add( fcell )
     while len(to_search)>0:

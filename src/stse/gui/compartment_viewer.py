@@ -67,8 +67,8 @@ from openalea.stse.io.walled_tissue.qhull_representation import \
 from openalea.stse.gui.voronoi_aplications import VoronoiCenterVisRep, \
     VoronoiCenterVisRepGeneral, MyScene, MyAction, general_cell_properties, \
     default_voronoi_factory, general_voronoi_factory, CompartmentWindow, \
-    FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue \
-
+    FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue 
+from openalea.stse.structures.algo.walled_tissue import cell_center
 
 # ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
     
@@ -129,6 +129,47 @@ class FileSaveWalledTissue(MyAction):
 
                 
 class CompartmentViewerWindow( CompartmentWindow ):
+    """
+<h1>Interactions</h1>
+<h2>Specific interactions:</h2>
+These interactions are redefined for this application:
+<ul>
+<li>'p': Changes the selection (depicted with white wireframe sphere) to the voronoi center  under the mouse cursor. If no voronoi center is under the mouse cursor selection remains unchanged.
+</ul>
+
+<h2>Editing properties:</h2>
+<ul>
+<li>Action tab: contains details of the selected action. Actions are changed by choosing them from the Actions menu.
+<li>Visualization: Allows to change different properties of the visualisation. Actor size and color mapping for mesh cells are the most important among them.
+<li>Selected center tab: Allows to change a name and a color of a sphere actor. NOTE: second bar must be used to change color (and enen then color will be refreshed only after changing view in 3D window).
+<li>Help tab: Displays the information about application interface.
+</ul>
+
+<h2>Default mouse interaction</h2>
+<p>These are the default interactions for tvtk.InteractorStyleImage():</p>
+
+<ul>
+<li>Holding down 'SHIFT' and the left mouse button down will pan the scene
+<li>Holding down 'CONTROL' will rotate around the camera's axis (roll).
+<li>Rotating the mouse wheel upwards will zoom in and downwards will zoom out.
+</ul>
+
+<h2>Default keyboard interaction</h2>
+<p>The scene supports several features activated via keystrokes. These are:</p>
+<ul>
+<li>'3': Turn on/off stereo rendering. This may not work if the 'stereo' preference item is not set to True.
+<li>'e'/'q'/'Esc': Exit full-screen mode.
+<li>'f': Move camera's focal point to current mouse location. This will move the camera focus to center the view at the current mouse position.
+<li>'l': Configure the lights that are illumining the scene. This will pop-up a window to change the light configuration.
+<li>'r': Reset the camera focal point and position. This is very handy.
+<li>'s': Save the scene to an image, this will first popup a file selection dialog box so you can choose the filename, the extension of the filename determines the image type.
+<li>'='/'+': Zoom in.
+<li>'-': Zoom out.
+<li>'left'/'right'/'up'/'down' arrows: Pressing the left, right, up and down arrow let you rotate the camera in those directions. When 'SHIFT' modifier is also held down the camera is panned.
+</ul>
+    """
+    _help = HTML(__doc__)
+    
     def register_actions( self ):
         super(CompartmentViewerWindow, self).register_actions()
         # defining menu/toolbar positions
@@ -318,6 +359,24 @@ class CompartmentViewerWindow( CompartmentWindow ):
                 # to workaround the bug in Traits voronoi_changed has to be set to False not with the default option but explicitly
                 self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=False )
                 if render_scene: self.scene_model.render()
+    
+    def update_vtk_from_voronoi( self, render_scene = True, voronoi_changed=False ):
+            a = self
+            a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
+                
+            pos_list = []
+            for i in a._voronoi_wt.cells():
+                pos_list.append( tuple( cell_center(a._voronoi_wt, i ) ) )
+            
+            a.add_voronoi_centers( pos_list=pos_list, render_scene=False, \
+                update_vtk_from_voronoi=False )
+
+            #updates the properties of voronoi centers with WalledTissue properties 
+            synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
+            copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
+                a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
+            
+            super(CompartmentViewerWindow, self).update_vtk_from_voronoi( render_scene=render_scene, voronoi_changed=voronoi_changed )
 
 
 def mesh_viewing():
