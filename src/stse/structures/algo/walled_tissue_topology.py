@@ -26,7 +26,7 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 
-
+from openalea.stse.tools.misc import upe
 
 
 
@@ -135,7 +135,7 @@ def create_shapes_for_new_cells( shape, v1, v2 ):
     for i in range( ls ):
         wvc1.append( shape[ i%ls ] )
         stop = i
-        if tools.upe( ( shape[ i%ls ], shape[ (i+1)%ls ] ), (s1, t1) ):
+        if upe( ( shape[ i%ls ], shape[ (i+1)%ls ] ), (s1, t1) ):
             break
 
     wvc1.append( v1d )
@@ -146,7 +146,7 @@ def create_shapes_for_new_cells( shape, v1, v2 ):
     for i in range( (stop+1)%ls, ls ):
         wvc2.append( shape[ i%ls ] )
         stop = i
-        if tools.upe( (shape[ i%ls ], shape[ (i+1)%ls ]), (s2, t2) ) : 
+        if upe( (shape[ i%ls ], shape[ (i+1)%ls ]), (s2, t2) ) : 
             break 
 
     for i in range( (stop+1), ls ):

@@ -299,12 +299,12 @@ class TissueTopology:
             #print " !: possible problem with removing cell"
         
         for wv in self.cell2wvs( cell ):
-            #try:
-            #    self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )
-            #except ValueError:
-            #    #TODO why??    
-            #    pass
-            self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )
+            try:
+                self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )
+            except ValueError:
+                #For single cell 
+                pass
+            #self.wv2cells( wv, self.wv2cells( wv ).remove( cell ) )
         self._cell2wv_list.pop( cell )
         self._cells.remove_node( cell )
 
