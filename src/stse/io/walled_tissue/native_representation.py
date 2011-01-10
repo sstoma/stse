@@ -165,6 +165,7 @@ class TissuePickleReader( TissueReader ):
 	
 	def read_property (self, property_name) :
 		f=open(path.join(self._dirname,"%s.tip" % property_name),'rbU')
+		#print path.join(self._dirname,"%s.tip" % property_name)
 		prop=pickle.load(f)
 		f.close()
 		return prop
