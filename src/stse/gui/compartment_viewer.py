@@ -1,45 +1,40 @@
 #!/usr/bin/env python
-"""Application allowing for 2D tissue viewing.
 
+"""Application allowing for 2D tissue viewing.
 :todo:
     To be revied by somebody skillfull in VTK/TraitsUI/tvtk
-
 :bug:
     None known.
-    
+
 :organization:
-    INRIA/Humboltd University Berlin
-
-"""
+    INRIA/Humboltd University Berlin"""
+    
 # Module documentation variables:
-__authors__="""Szymon Stoma    
-"""
-__contact__="<Your contact>"
-__license__="Cecill-C"
-__date__="Thu Aug 13 11:45:26 CEST 2009"
-__version__="0.1"
-__docformat__= "restructuredtext en"
+__authors__ = """Szymon Stoma"""
+__contact__ = "<Your contact>"
+__license__ = "Cecill-C"
+__date__ = "Thu Aug 13 11:45:26 CEST 2009"
+__version__ = "0.1"
+__docformat__ = "restructuredtext en"
 
 
-# ---------------------------------------------------------------- IMPORTS
-# Standard library imports.
+# ----------------------------------IMPORTS-----------
+
 import random
 import math
 
-# Enthought library imports.
-from enthought.pyface.api import FileDialog, DirectoryDialog, GUI, OK, \
-    ImageResource
-from enthought.pyface.action.api import Action, MenuBarManager, \
-    MenuManager, ToolBarManager
+from numpy import array, zeros
 
-from enthought.traits.api import  Instance, HasTraits, Range, \
+from enthought.pyface.api import FileDialog, DirectoryDialog, GUI, OK, ImageResource
+from enthought.pyface.action.api import Action, MenuBarManager, MenuManager, ToolBarManager
+
+from enthought.traits.api import Instance, HasTraits, Range, \
     on_trait_change, Color, HTML, Enum, Tuple, Int, Bool, Array, Float, Any, Str
 
 from enthought.tvtk.pyface.scene_editor import SceneEditor
 from enthought.tvtk.api import tvtk
 
-from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, \
-    HSplit, InstanceEditor
+from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, HSplit, InstanceEditor
 
 from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
 from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
@@ -49,199 +44,263 @@ from enthought.mayavi.modules.image_actor import ImageActor
 
 from vtk.util import colors
 
-from numpy import array, zeros
-
 import os
 import os.path
 
-# openalea
-from openalea.stse.io.walled_tissue.vtk_representation import \
-    walled_tissue2vtkPolyData, synchronize_id_of_wt_and_voronoi, \
-    copy_cell_properties_from_voronoi_to_wt, copy_cell_properties_from_wt_to_voronoi
 from openalea.stse.structures.walled_tissue import WalledTissue
-from openalea.stse.io.walled_tissue.native_representation import \
-    write_walled_tissue, read_walled_tissue
-from openalea.stse.io.qhull import voronoi_centers_to_edges 
-from openalea.stse.io.walled_tissue.qhull_representation import \
-    read_qhull2walled_tissue
-from openalea.stse.gui.voronoi_aplications import VoronoiCenterVisRep, \
-    VoronoiCenterVisRepGeneral, MyScene, MyAction, general_cell_properties, \
-    default_voronoi_factory, general_voronoi_factory, CompartmentWindow, \
-    FileLoadBackgroundImage, ActionsUpdateVoronoiEdges, FileLoadWalledTissue 
-from openalea.stse.structures.algo.walled_tissue import cell_center
+from openalea.stse.io.walled_tissue.native_representation import write_walled_tissue, read_walled_tissue
 
-# ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
+from openalea.stse.tools.convex_hull import int_points_in_polygon, xy_minimal_bounding_box_of_polygon
+
+from openalea.stse.gui.voronoi_aplications import VoronoiCenterVisRep, VoronoiCenterVisRepGeneral, MyScene, MyAction, \
+    general_cell_properties, default_voronoi_factory, general_voronoi_factory, CompartmentWindow
     
+    
+# ----------------------------------MENU ACTIONS------
 
-# ---------------------------------------------------------------------- ACTIONS
 
-        
-class FileLoadWalledTissueSerie(MyAction):
+# ------------------------
+# menubar: "File"
+
+
+# "Load background."
+class FileLoadBackgroundImage(MyAction):
+    """Load background image."""
+    
+    # Perform button.
     def perform(self):
-        """Pops up a dialog used to load WalledTissue series"""
+        """Pops up a dialog used to load a background image."""
+        extns = ['*.bmp', '*.png', '*.tif', '*.jpg', '*']
+        dlg = FileDialog(action = 'open',
+                wildcard = '*', title = "Load image")
+        
+        if dlg.open() == OK:
+            self.__load_image(dlg.path)
+    
+    # Private method called by perform button.
+    def __load_image(self, file_name):
+        """Loads image to GUI."""
+        a = self._application
+        engine = mlab.get_engine()
+        
+        if not a._bg_image_reader:
+            a._bg_image_reader = engine.open(file_name)
+            a._bg_image = mlab.pipeline.image_actor(a._bg_image_reader)
+        else:
+            a._bg_image.remove()
+            a._bg_image_reader.remove()
+            a._bg_image_reader = engine.open(file_name)
+            a._bg_image = mlab.pipeline.image_actor(a._bg_image_reader)
+            
+        a._bg_image.module_manager.scalar_lut_manager.lut_mode = 'gray'
+        
+        (x1, x2) = a._bg_image.actor.x_range
+        (y1, y2) = a._bg_image.actor.y_range
+        
+        if a.actions.has_key("actions_add_voronoi_centers"):
+            act = a.actions["actions_add_voronoi_centers"]
+            a._cut_plane.place_widget(x1, x2, y1, y2, 0., 0.)
+            
+            act.voronoi_centers_limit_left_bottom_position = (x1, y1)
+            act.voronoi_centers_limit_right_top_position = (x2, y2)
+            
+        return a._bg_image_reader
+
+
+# "Save WalledTissue."
+class FileSaveWalledTissue(MyAction):
+    """Save WalledTissue."""
+    
+    # Perform button.
+    def perform(self):
+        """Pops up a dialog used to save WalledTissue."""
         a = self._application
         extns = ['*']
-        dlg = DirectoryDialog( action='open',
-                wildcard='|'.join(extns), title="Load WalledTissue serie")
+        
+        dlg = FileDialog(action = 'save as',
+                wildcard = '|'.join(extns), title = "Save WalledTissue")
+        
+        if dlg.open() == OK:
+            t = a._voronoi_wt
+            saved_tissue = write_walled_tissue(tissue = a._voronoi_wt, name = dlg.path, desc = "Test tissue")
+
+
+# "Load WalledTissue."
+class FileLoadWalledTissue(MyAction):
+    """Load WalledTissue."""
+    
+    # Perform button.
+    def perform(self):
+        """Pops up a dialog used to load WalledTissue."""
+        a = self._application
+        dlg = DirectoryDialog(action = 'open',
+                wildcard = '*', title = "Load WalledTissue")
+        
+        if dlg.open() == OK:
+            self.load(dlg.path)
+    
+    # Method called by perform button.
+    def load(self, path):
+            """Load WalledTissue."""
+            a = self._application
+            
+            # TODO: Add reading properties to voronoi center class.
+            a.remove_all_voronoi_centers(update_properties_from_wt2d_to_pm = False)
+            a._voronoi_wt = read_walled_tissue(file_name = path)
+                
+            pos_list = []
+            for i in a._voronoi_wt.cells():
+                pos_list.append(a._voronoi_wt.cell_property(i, "voronoi_center"))
+                
+            for i in a._voronoi_wt.tissue_property("outside_voronoi_centers"):
+                pos_list.append(i)
+            
+            a.add_voronoi_centers(pos_list = pos_list, render_scene = False, update_properties_from_wt2d_to_pm = False)
+
+            # Update properties from WalledTissue2d to voronoi centers structure.
+            a.update_properties_from_wt2d_to_vc(a._voronoi_wt, a._voronoi_center_list, a._voronoi_wt.const.cell_properties)
+             
+            # Update properties from WalledTissue2d to polygonal mesh.
+            a.update_properties_from_wt2d_to_pm(voronoi_changed = False)
+
+
+# "Load WalledTissueSerie."
+class FileLoadWalledTissueSerie(MyAction):
+    """Load WalledTissueSerie."""
+    
+    # Perform button.
+    def perform(self):
+        """Pops up a dialog used to load WalledTissue series."""
+        a = self._application
+        extns = ['*']
+        
+        dlg = DirectoryDialog(action = 'open',
+                wildcard = '|'.join(extns), title = "Load WalledTissue serie")
         
         if dlg.open() == OK:
             dirname = dlg.path
             for i in [f for f in os.listdir(dirname) if os.path.isdir(os.path.join(dirname, f))]:
                 print " #: loading ", i
-                a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
-                a._voronoi_wt = read_walled_tissue( file_name=os.path.join(dirname, i) )        
-
-                #pos_list = []
-                #for i in a._voronoi_wt.cells():
-                #    pos_list.append( a._voronoi_wt.cell_property(i, "voronoi_center" ) )
-                #for i in a._voronoi_wt.tissue_property("outside_voronoi_centers"):
-                #    pos_list.append( i )
-                #
-                #a.add_voronoi_centers( pos_list=pos_list, render_scene=False, \
-                #    update_vtk_from_voronoi=False )
-                #
-                ##updates the properties of voronoi centers with WalledTissue properties 
-                #
-                #synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-                #copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
-                #    a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
-                #
-                a.update_vtk_from_voronoi()
-
-                a.display_tissue_scalar_properties(property=a._cell_scalars_active_name)
-                a.scene_model.save_png(os.path.join(dirname, str(i)+".png") )            
-
-
-class FileSaveWalledTissue(MyAction):
-    def perform(self):
-        """Pops up a dialog used to save WalledTissue."""
-        a = self._application
-        extns = ['*']
-        dlg = FileDialog( action='save as',
-                wildcard='|'.join(extns), title="Save WalledTissue")
-        
-        if dlg.open() == OK:
-            t = a._voronoi_wt
-            saved_tissue = write_walled_tissue( tissue=a._voronoi_wt, name=dlg.path, desc="Test tissue" )
-
-
-# ------------------------------------------------------------------ APPLICATION
-
                 
-class CompartmentViewerWindow( CompartmentWindow ):
-    """
-<h1>Interactions</h1>
-<h2>Specific interactions:</h2>
-These interactions are redefined for this application:
-<ul>
-<li>'p': Changes the selection (depicted with white wireframe sphere) to the voronoi center  under the mouse cursor. If no voronoi center is under the mouse cursor selection remains unchanged.
-</ul>
+                a.remove_all_voronoi_centers(update_properties_from_wt2d_to_pm = False)
+                a._voronoi_wt = read_walled_tissue(file_name = os.path.join(dirname, i))        
 
-<h2>Editing properties:</h2>
-<ul>
-<li>Action tab: contains details of the selected action. Actions are changed by choosing them from the Actions menu.
-<li>Visualization: Allows to change different properties of the visualisation. Actor size and color mapping for mesh cells are the most important among them.
-<li>Selected center tab: Allows to change a name and a color of a sphere actor. NOTE: second bar must be used to change color (and enen then color will be refreshed only after changing view in 3D window).
-<li>Help tab: Displays the information about application interface.
-</ul>
+                a.update_properties_from_wt2d_to_pm()
 
-<h2>Default mouse interaction</h2>
-<p>These are the default interactions for tvtk.InteractorStyleImage():</p>
+                a.display_tissue_scalar_properties(property = a._cell_scalars_active_name)
+                
+                a.scene_model.save_png(os.path.join(dirname, str(i) + ".png"))            
 
-<ul>
-<li>Holding down 'SHIFT' and the left mouse button down will pan the scene
-<li>Holding down 'CONTROL' will rotate around the camera's axis (roll).
-<li>Rotating the mouse wheel upwards will zoom in and downwards will zoom out.
-</ul>
 
-<h2>Default keyboard interaction</h2>
-<p>The scene supports several features activated via keystrokes. These are:</p>
-<ul>
-<li>'3': Turn on/off stereo rendering. This may not work if the 'stereo' preference item is not set to True.
-<li>'e'/'q'/'Esc': Exit full-screen mode.
-<li>'f': Move camera's focal point to current mouse location. This will move the camera focus to center the view at the current mouse position.
-<li>'l': Configure the lights that are illumining the scene. This will pop-up a window to change the light configuration.
-<li>'r': Reset the camera focal point and position. This is very handy.
-<li>'s': Save the scene to an image, this will first popup a file selection dialog box so you can choose the filename, the extension of the filename determines the image type.
-<li>'='/'+': Zoom in.
-<li>'-': Zoom out.
-<li>'left'/'right'/'up'/'down' arrows: Pressing the left, right, up and down arrow let you rotate the camera in those directions. When 'SHIFT' modifier is also held down the camera is panned.
-</ul>
-    """
-    _help = HTML(__doc__)
+# ----------------------------------APPLICATION------
+
+
+# Compartment window.
+class CompartmentViewerWindow(CompartmentWindow):
+    """Compartment window"""
     
-    def register_actions( self ):
-        super(CompartmentViewerWindow, self).register_actions()
-        # defining menu/toolbar positions
-        # note: they can be shared
+    # Register menu actions.
+    def register_actions(self):
+        """Defining menubar positions."""
+        # ---Defining menubar: "File".
         
+        # "Load background."
         file_load_background_image = FileLoadBackgroundImage(
-                parent=self,
-                name = "Load background",
-                toolip = "Loads background image file to the current scene",            
-                action = "self.perform",
-        )
-        self.actions["file_load_background_image"] =file_load_background_image
-                
-        file_load_walled_tissue = FileLoadWalledTissue(
-            parent=self,
-            name = "Load WalledTissue",
-            toolip = "Loads WalledTissue", 
+            parent = self,
+            name = "Load background",
+            toolip = "Loads background image file to the current scene",            
             action = "self.perform",
         )
-        self.actions["file_load_walled_tissue"] =file_load_walled_tissue
+        self.actions["file_load_background_image"] = file_load_background_image
         
+        # "Save WalledTissue." 
         file_save_walled_tissue = FileSaveWalledTissue(
-            parent=self,
+            parent = self,
             name = "Save WalledTissue",
             toolip = "Saves WalledTissue", 
             action = "self.perform",
         )
-        self.actions["file_save_walled_tissue"] =file_save_walled_tissue
+        self.actions["file_save_walled_tissue"] = file_save_walled_tissue
         
+        # "Load WalledTissue."
+        file_load_walled_tissue = FileLoadWalledTissue(
+            parent = self,
+            name = "Load WalledTissue",
+            toolip = "Loads WalledTissue", 
+            action = "self.perform",
+        )
+        self.actions["file_load_walled_tissue"] = file_load_walled_tissue
+        
+        # "Load WalledTissueSerie."
         file_load_walled_tissue_serie = FileLoadWalledTissueSerie(
-            parent=self,
+            parent = self,
             name = "Load WalledTissue serie",
             toolip = "Loads a serie of walled tissue simulations", 
             action = "self.perform",
         )
         self.actions["file_load_walled_tissue_serie"] = file_load_walled_tissue_serie
     
-    def default_traits_view( self ):
-        """Description of default view.
-        """
+    # Register listeners.
+    def do(self):
+        """Sets the application after initialization."""
+        
+        self._bw = tvtk.SphereWidget(interactor = self.scene_model.interactor, place_factor = 1.05)
+        
+        if len(self._voronoi_center_list):
+            self._bw.prop3d = self._voronoi_center_list[0]
+            self.select_voronoi_center(self._voronoi_center_list[0])
+            
+            self._bw.scale = False
+            self._bw.place_widget()
+            
+        self._bw.on()
+        self._bw.translation = 0
+        
+        # Switching the spheres using picker - key 'p'.
+        def rmc2_callback(widget, event):
+            """Alternative right mouse click callback"""
+            if self.scene_model.picker.pointpicker.actor in self._voronoi_center_list:
+                self.select_voronoi_center(self.scene_model.picker.pointpicker.actor)
+                
+        self.scene_model.picker.pointpicker.add_observer("PickEvent", rmc2_callback)
+        self.scene_model.picker.show_gui = False
+        
+        # Comment it if you would like "normal" 3d interactor instead of the on described in __doc__.
+        self.scene_model.interactor.interactor_style = tvtk.InteractorStyleImage()
+        self.scene_model.parallel_projection=True
+        self._voronoi_vtk_ds = None
+        self.scene_model.anti_aliasing_frames = 0
+    
+    # Prepare default view. Main Window.
+    def default_traits_view(self):
+        """Description of default view."""
         self.register_actions()
+        
         view = View(
-            # specifying the layout of the window,
-            # look at:
-            # http://code.enthought.com/projects/traits/docs/html/TUIUG/advanced_view.html
-            # http://code.enthought.com/projects/traits/docs/html/TUIUG/view.html
             HSplit(
                 Item(
-                    name='scene_model',
-                    editor=SceneEditor(
-                        # custom scene is used to get rid of default
-                        # scene toolbar
-                        scene_class=MayaviScene,
+                    name = 'scene_model',
+                    editor = SceneEditor(
+                        # Custom scene is used to get rid of default scene toolbar.
+                        scene_class = MayaviScene,
                     ),
-                    show_label=False,
+                    show_label = False,
                 ),
                 Tabbed(
                     VGroup(
                         Item(
                             '_selected_action',
-                            style='custom',
-                            editor=InstanceEditor(),
-                            label='',
-                            show_label=False,
+                            style = 'custom',
+                            editor = InstanceEditor(),
+                            label = '',
+                            show_label = False,
                         ),
-                        show_border = True,
-                        label = 'Actions',
+                        show_border = True, label = 'Actions',
                     ),
                     VGroup(
                         Item(
                             "voronoi_center_size",
-                            label="Voronoi center size",
+                            label = "Voronoi center size",
                         ),
                         Item(
                             "_cell_scalars_active",
@@ -254,145 +313,87 @@ These interactions are redefined for this application:
                         Item(
                             "_cell_scalars_range",
                             label = "Min/Max value of disp. prop.",
-                            enabled_when='not _cell_scalars_dynamic',
+                            enabled_when = 'not _cell_scalars_dynamic',
                         ),
                         Item(
                             "_cell_scalars_dynamic",
                             label = "Use auto Min/Max value",
                         ),
-                        show_border = True,
-                        label = 'Visualisation',
+                        show_border = True, label = 'Visualisation',
                     ),
                     VGroup(
                         Item(
-                            name='_selected_voronoi_center',
-                            editor=InstanceEditor(),
-                            enabled_when='_selected_voronoi_center is not None',
-                            style='custom',
-                            label='',
-                            show_label=False,
+                            name = '_selected_voronoi_center',
+                            editor = InstanceEditor(),
+                            enabled_when = '_selected_voronoi_center is not None',
+                            style = 'custom',
+                            label = '',
+                            show_label = False,
                         ),
-                        show_border = True,
-                        label = 'Selected center',
+                        show_border = True, label = 'Selected center',
                     ),
                     VGroup(
                         Item(
-                            name='_help',
-                            show_label=False,
+                            name = '_help',
+                            show_label = False,
                         ),
-                        show_border = True,
-                        label = 'Help',
+                        show_border = True, label = 'Help',
                     ),
                 ),
             ),
-            # specyfing type of the window,
-            # look at:
-            # http://code.enthought.com/projects/traits/docs/html/TUIUG/custom_view.html
-            kind='live',
-            title='Compartment Viewer',
-            resizable=True,
-            width=800,
-            height=600,
-            # defining menubar content
+            # Specyfing type of the window.
+            kind = 'live', title = 'Compartment Viewer', resizable = True,
+            width = 800, height = 600,
             menubar = MenuBarManager(
+                # ---menubar: "File".
                 MenuManager(
-                    self.actions[ "file_load_background_image"],
-                    self.actions[ "file_save_walled_tissue"],
-                    self.actions[ "file_load_walled_tissue"],
-                    self.actions[ "file_load_walled_tissue_serie"],
+                    self.actions["file_load_background_image"],
+                    self.actions["file_save_walled_tissue"],
+                    self.actions["file_load_walled_tissue"],
+                    self.actions["file_load_walled_tissue_serie"],
                     name = '&File',
                 ),
+                # ---menubar: "Actions".
                 MenuManager(
                     name = '&Actions',
                 ),
             ),
-            ## defining toolbar content
-            #toolbar= ToolBarManager(
-            #    file_load_background_image,
-            #),
         )
+        
         return view
 
-                               
-                                   
-    def do( self ):
-        """Sets the application after initialization.
-        """
-        self._bw = tvtk.SphereWidget(interactor=self.scene_model.interactor, place_factor=1.05)
-        if len(self._voronoi_center_list):
-            self._bw.prop3d=self._voronoi_center_list[0]
-            self.select_voronoi_center( self._voronoi_center_list[0] )
-            self._bw.scale = False
-            self._bw.place_widget()
-        self._bw.on()
-        self._bw.translation = 0
-        
-        # switching the spheres using picker - key 'p'
-        def rmc2_callback(widget, event):
-            """Alternative right mouse click callback"""
-            if self.scene_model.picker.pointpicker.actor in self._voronoi_center_list:
-                self.select_voronoi_center( self.scene_model.picker.pointpicker.actor )
-        self.scene_model.picker.pointpicker.add_observer("PickEvent", rmc2_callback)
-        self.scene_model.picker.show_gui = False
-        
-        # comment it if you would like "normal" 3d interactor instead of the one
-        # described in __doc__
-        self.scene_model.interactor.interactor_style = \
-            tvtk.InteractorStyleImage()
-        
-        self.scene_model.parallel_projection=True
-        
-        self._voronoi_vtk_ds = None
-        
-        self.scene_model.anti_aliasing_frames = 0
-
-    def update_colormap( self, render_scene = True, voronoi_changed=False):
+    # Update colormap.
+    def update_colormap(self, render_scene = True, voronoi_changed = False):
         if self._cell_scalars_active:
             if self._cell_scalars_active_name in self.cell_properties.keys():
-                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
-                if render_scene: self.scene_model.render()
+                self.display_tissue_scalar_properties(self._cell_scalars_active_name, render_scene = False, voronoi_changed = voronoi_changed)
+                if render_scene: 
+                    self.scene_model.render()
 
+    # Update colormap.
     @on_trait_change('_cell_scalars_active')
-    def update_colormap_on_cell_scalars_active_change( self, render_scene = True, voronoi_changed=False):
+    def update_colormap_on_cell_scalars_active_change(self, render_scene = True, voronoi_changed = False):
         if self._cell_scalars_active:
             if self._cell_scalars_active_name in self.cell_properties.keys():
-                # to workaround the bug in Traits voronoi_changed has to be set to False not with the default option but explicitly
-                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=False )
-                if render_scene: self.scene_model.render()
-    
-    def update_vtk_from_voronoi( self, render_scene = True, voronoi_changed=False ):
-            a = self
-            a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
-                
-            pos_list = []
-            for i in a._voronoi_wt.cells():
-                pos_list.append( tuple( cell_center(a._voronoi_wt, i ) ) )
-            
-            a.add_voronoi_centers( pos_list=pos_list, render_scene=False, \
-                update_vtk_from_voronoi=False )
-
-            #updates the properties of voronoi centers with WalledTissue properties 
-            synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-            copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
-                a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
-            
-            super(CompartmentViewerWindow, self).update_vtk_from_voronoi( render_scene=render_scene, voronoi_changed=voronoi_changed )
+                # To workaround the bug in Traits voronoi_changed has to be set to False not with the default option but explicitly.
+                self.display_tissue_scalar_properties(self._cell_scalars_active_name, render_scene = False, voronoi_changed = False)
+                if render_scene: 
+                    self.scene_model.render()
 
 
-def mesh_viewing():
-    returnCompartmentViewerWindow()
-
-def general_viewing():
-    return CompartmentViewerWindow( voronoi_factory=general_voronoi_factory, \
-        cell_properties=general_cell_properties)    
-
+# Start application.
 def start_gui():
+    """Start application."""
+    
     # Create and open an application window.
-    window = general_viewing()
+    window = CompartmentViewerWindow(voronoi_factory = general_voronoi_factory, cell_properties = general_cell_properties)  
+    
     window.edit_traits()
     window.do()
     GUI().start_event_loop()
+    
     return window
+
 
 if __name__ == '__main__':
     start_gui() 

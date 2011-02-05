@@ -1,44 +1,44 @@
 #!/usr/bin/env python
-"""Rutines for compartment editor viewer.
 
+"""Rutines for compartment editor viewer.
 :todo:
     To be revied by somebody skillfull in VTK/TraitsUI/tvtk
-
 :bug:
     None known.
-    
 :organization:
-    INRIA/Humboltd University Berlin
-
-"""
+    INRIA/Humboltd University Berlin"""
+    
 # Module documentation variables:
-__authors__="""Szymon Stoma    
-"""
-__contact__="<Your contact>"
-__license__="Cecill-C"
-__date__="<Timestamp>"
-__version__="0.1"
-__docformat__= "restructuredtext en"
+__authors__ = """Szymon Stoma"""
+__contact__ = "<Your contact>"
+__license__ = "Cecill-C"
+__date__ = "<Timestamp>"
+__version__ = "0.1"
+__docformat__ = "restructuredtext en"
 
-# Standard library imports.
-# Standard library imports.
+
+# ----------------------------------IMPORTS-----------
+
 import random
 import math
+from copy import copy
 
-# Enthought library imports.
-from enthought.pyface.api import FileDialog, DirectoryDialog, GUI, OK, \
-    ImageResource
-from enthought.pyface.action.api import Action, MenuBarManager, \
-    MenuManager, ToolBarManager
+from pylab import inf
 
-from enthought.traits.api import  Instance, HasTraits, Range, \
-    on_trait_change, Color, HTML, Enum, Tuple, Int, Bool, Array, Float, Any, Str, Button
+from numpy import array, zeros, inf, infty
+
+from enthought.pyface.api import FileDialog, DirectoryDialog, GUI, OK, ImageResource
+from enthought.pyface.action.api import Action, MenuBarManager, MenuManager, ToolBarManager
+
+from enthought.traits.api import  Instance, HasTraits, Range, on_trait_change, Color, HTML, \
+    Enum, Tuple, Int, Bool, Array, Float, Any, Str, Button
+
+from enthought.traits.trait_errors import TraitError
 
 from enthought.tvtk.pyface.scene_editor import SceneEditor
 from enthought.tvtk.api import tvtk
 
-from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, \
-    HSplit, InstanceEditor, HGroup
+from enthought.traits.ui.api import View, Item, VGroup, Tabbed, HSplit, InstanceEditor, HGroup
 
 from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
 from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
@@ -49,103 +49,122 @@ from enthought.persistence.file_path import FilePath
 
 from vtk.util import colors
 
-from numpy import array, zeros, inf
-
-# openalea
-from openalea.stse.io.walled_tissue.vtk_representation import \
-    walled_tissue2vtkPolyData, synchronize_id_of_wt_and_voronoi, \
-    copy_cell_properties_from_voronoi_to_wt, copy_cell_properties_from_wt_to_voronoi
 from openalea.stse.structures.walled_tissue import WalledTissue
-from openalea.stse.io.walled_tissue.native_representation import \
-    write_walled_tissue, read_walled_tissue
-from openalea.stse.io.qhull import voronoi_centers_to_edges 
-from openalea.stse.io.walled_tissue.qhull_representation import \
-    read_qhull2walled_tissue
+from openalea.stse.structures.walled_tissue_const import WalledTissueConst
+
+from openalea.stse.io.walled_tissue.native_representation import write_walled_tissue, read_walled_tissue
+from openalea.stse.io.walled_tissue.vtk_representation import synchronize_id_of_wt_and_voronoi
+from openalea.stse.io.walled_tissue.qhull_representation import read_qhull2walled_tissue
+
+from openalea.stse.io.qhull import voronoi_centers_to_edges
+
 from openalea.stse.tools.emergency import kill_close_points
-from openalea.stse.tools.convex_hull import int_points_in_polygon
-from openalea.stse.structures.algo.walled_tissue import \
-    calculate_cell_surface
-from openalea.stse.tools.convex_hull import int_points_in_polygon, xy_minimal_bounding_box_of_polygon
+from openalea.stse.tools.convex_hull import int_points_in_polygon, hulls
 
-# ---------------------------------------------------- GUI DATASTRUCTURE CLASSES
+from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface, cell_centers, create
+from openalea.stse.structures.algo.walled_tissue_topology import find_degenerated_cells, kill_degenerated_cells
+
+from openalea.stse.tools.convex_hull import int_points_in_polygon, xy_minimal_bounding_box_of_polygon, point_inside_polygon
+
+from openalea.plantgl.math import Vector3
 
 
+# ----------------------------------GUI DATASTRUCTURE CLASSES------
+
+# Represents the cell center of a cell.
 class VoronoiCenterVisRep(tvtk.Actor):
-    """Represents the cell center of a cell.
-    """
+    """Represents the cell center of a cell."""
+    
     cell_id = Int(-1)
     voronoi_center = Any
     was_inf = Bool(False)
     
-    def __init__(self, center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, cell_type='', **kwargs):
+    # Init.
+    def __init__(self, center = (0, 0, 0), radius = 0.1, resolution = 16,
+            color = colors.white, opacity = 1.0, cell_type = '', **kwargs):
+                     
         """ Creates a sphere and returns the actor. """
         super(VoronoiCenterVisRep, self).__init__( **kwargs )
-        source = tvtk.SphereSource(center=center, radius=radius,
-                                   theta_resolution=resolution,
-                                   phi_resolution=resolution)
-        self.mapper = tvtk.PolyDataMapper(input=source.output)
-        self.property = tvtk.Property(opacity=opacity, color=color)
+        
+        source = tvtk.SphereSource(center = center, radius = radius,
+            theta_resolution = resolution, phi_resolution = resolution)
+                                   
+        self.mapper = tvtk.PolyDataMapper(input = source.output)
+        self.property = tvtk.Property(opacity = opacity, color = color)
     
-    def default_traits_view( self ):    
+    # Prepare default view.
+    def default_traits_view(self):    
         view = View(
-            Item("cell_id", style='readonly'),
+            Item("cell_id", style = 'readonly'),
         )
+        
         return view
     
+    # Change cell id.
     @on_trait_change('cell_id')
     def change_cell_id(self):
         pass
-    
-def default_voronoi_factory( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
-    """Used to generate voronoi centers.
-    """
-    return VoronoiCenterVisRep( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity, **kwargs )
-    
+
+
+# Generate voronoi centers.
+def default_voronoi_factory(center = (0, 0, 0), radius = 0.1, resolution = 16,
+        color = colors.white, opacity = 1.0, **kwargs):
+                     
+    """Used to generate voronoi centers."""
+    return VoronoiCenterVisRep(center = center, radius = radius, resolution = resolution,
+        color = color, opacity = opacity, **kwargs)
+
+
+# Represents the cell center of a cell.
 class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
-    """Represents the cell center of a cell.
-    """
+    """Represents the cell center of a cell."""
+    
     cell_center_color = Color()
-    cell_type = Enum("A","B","C","D","E","F","G","H","I")
+    cell_type = Enum("A", "B", "C", "D", "E", "F", "G", "H", "I")
+    
     custom_cell_property1 = Float(0.)
     custom_cell_property2 = Float(0.)
     custom_cell_property3 = Float(0.)
     custom_cell_property4 = Float(0.)
     custom_cell_property5 = Float(0.)
     
-    def __init__(self, center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
-        """ Creates a sphere and returns the actor. """
+    # Init.
+    def __init__(self, center = (0, 0, 0), radius = 0.1, resolution = 16,
+            color = colors.white, opacity = 1.0, **kwargs):
+                     
+        """Creates a sphere and returns the actor."""
         super(VoronoiCenterVisRepGeneral, self).__init__( **kwargs )
-        source = tvtk.SphereSource(center=center, radius=radius,
-                                   theta_resolution=resolution,
-                                   phi_resolution=resolution)
-        self.mapper = tvtk.PolyDataMapper(input=source.output)
-        self.property = tvtk.Property(opacity=opacity, color=color)
-        self.voronoi_center=array(3)
-        if kwargs.has_key( "cell_type" ):
+        source = tvtk.SphereSource(center = center, radius = radius,
+            theta_resolution = resolution, phi_resolution = resolution)
+                                   
+        self.mapper = tvtk.PolyDataMapper(input = source.output)
+        self.property = tvtk.Property(opacity = opacity, color = color)
+        
+        self.voronoi_center = array(3)
+        
+        if kwargs.has_key("cell_type"):
             self.cell_type = kwargs["cell_type"]
             self.change_cell_center_color()
         
-    def default_traits_view( self ):    
+    # Prepare default view.
+    def default_traits_view(self):    
         view = View(
-            Item("cell_id", style='readonly'),
-            #Item("voronoi_center", style='readonly'),
-            #Item("was_inf", style='readonly'),
-            Item("cell_type",style='simple'),
-            Item("custom_cell_property1",style='simple'),
-            Item("custom_cell_property2",style='simple'),
-            Item("custom_cell_property3",style='simple'),
-            Item("custom_cell_property4",style='simple'),
-            Item("custom_cell_property5",style='simple'),
+            Item("cell_id", style = 'readonly'),
+            Item("cell_type", style = 'simple'),
+            Item("custom_cell_property1", style = 'simple'),
+            Item("custom_cell_property2", style = 'simple'),
+            Item("custom_cell_property3", style = 'simple'),
+            Item("custom_cell_property4", style = 'simple'),
+            Item("custom_cell_property5", style = 'simple'),
         )
+        
         return view
     
+    # Change cell center color.
     @on_trait_change('cell_type')
     def change_cell_center_color(self):
         c = self.cell_center_color
+        
         if self.cell_type == "A":
             self.property.color = colors.white
         elif self.cell_type == "B":
@@ -165,84 +184,92 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
         elif self.cell_type == "I":
             self.property.color = colors.azure 
 
-def general_voronoi_factory( center=(0, 0, 0), radius=0.1, resolution=16,
-                     color=colors.white, opacity=1.0, **kwargs):
-    """Used to generate voronoi centers.
-    """
-    return VoronoiCenterVisRepGeneral( center=center, radius=radius, resolution=resolution,
-                     color=color, opacity=opacity, **kwargs )
-    
-# ---------------------------------------------------- CUSTOMIZATION GUI CLASSES
 
+# Generate voronoi centers.
+def general_voronoi_factory(center = (0, 0, 0), radius = 0.1, resolution = 16,
+        color = colors.white, opacity = 1.0, **kwargs):
     
+    """Used to generate voronoi centers."""
+    return VoronoiCenterVisRepGeneral(center = center, radius = radius, resolution = resolution,
+        color = color, opacity = opacity, **kwargs )
+
+
+# ----------------------------------CUSTOMIZING GUI CLASSES------
+
+# Defined to get rid of default toolbar.
 class MyScene(MlabSceneModel):
-    """Defined to get rid of default toolbar.
-    """
-    ## uncoment the line below to remove default view toolbar 
-    #actions = []
+    """Defined to get rid of default toolbar."""
+
     pass
 
 
+# Defined since the Actions in the toolbar/menu require some fields which are not defined in Action.
 class MyAction(Action):
-    """Defined since the Actions in the toolbar/menu require some fields which
-    are not defined in Action.
-    """
-    # why Action does not contain these variables??
+    """Defined since the Actions in the toolbar/menu require some fields which are not defined in Action."""
+    
+    # Why Action does not contain these variables?
     defined_when = ""
     enabled_when = ""
     checked_when = ""
-    no_conf_string = Str("No configuration options")
-    perform_btn = Button( label='Execute' )
     
+    no_conf_string = Str("No configuration options")
+    perform_btn = Button(label = 'Execute')
+    
+    # Init. 
     def __init__(self, **kwargs):
         """Init"""
-        super(MyAction, self).__init__( **kwargs )
+        super(MyAction, self).__init__(**kwargs)
         self._application = kwargs['parent']
-        
-    def perform(self):
-        """
-        Adds action GUI to the control panel 
-        """
-        a = self._application
-        a._selected_action = self
-        
-    def default_traits_view( self ):
-        """Description of default view.
-        """
+    
+    # Prepare default view.
+    def default_traits_view(self):
+        """Description of default view."""
         view = View(
             Item(
                 'no_conf_string',
-                show_label=False,
-                style='readonly',
+                show_label = False,
+                style = 'readonly',
             ),
             Item(
                 "perform_btn",
                 show_label = False,
             ),
         )
+        
         return view
     
-    def _perform_btn_fired( self ):
-        """Runs default action.
-        """
+    # Perform button.
+    def perform(self):
+        """Adds action GUI to the control panel."""
+        a = self._application
+        a._selected_action = self
+    
+    # Runs default action.
+    def _perform_btn_fired(self):
+        """Runs default action."""
         self.perform_calc()
 
-    def perform_calc( self ):
-        """Runs default action.
-        """
-        print " !: Perform not defined.."
- 
+    # Perform calc button.
+    def perform_calc(self):
+        """Runs default action."""
+        print " !: Perform not defined."
+
+
+# Define general cell properties.
 general_cell_properties = {
-        'custom_cell_property1': 0.,
-        'custom_cell_property2': 0.,
-        'custom_cell_property3': 0.,
-        'custom_cell_property4': 0.,
-        'custom_cell_property5': 0.,
-        'cell_type': 'A',
+    'custom_cell_property1': 0.,
+    'custom_cell_property2': 0.,
+    'custom_cell_property3': 0.,
+    'custom_cell_property4': 0.,
+    'custom_cell_property5': 0.,
+    'cell_type': 'A',
 }
 
 
-class CompartmentWindow( HasTraits ):
+# ----------------------------------COMPARTMENT WINDOW------
+
+# Compartment window.
+class CompartmentWindow(HasTraits):
     """
 <h1>Interactions</h1>
 <h2>Specific interactions:</h2>
@@ -287,407 +314,393 @@ The Voronoi diagram is created only for centers inside given insets. These inset
 <li>'-': Zoom out.
 <li>'left'/'right'/'up'/'down' arrows: Pressing the left, right, up and down arrow let you rotate the camera in those directions. When 'SHIFT' modifier is also held down the camera is panned.
 </ul>
-    """        
-    ## controls    
-    # size of voronoi cell centers
-    voronoi_center_size = Range(1,10.,0.1)
+    """  
+    
+    ## Controls.    
+    # Size of voronoi cell centers.
+    voronoi_center_size = Range(1, 10., 0.1)
 
-    ## displayed application internals 
-    _help = HTML(__doc__)    
-    scene_model = Instance( MlabSceneModel, () )
-    _bg_image = Instance( ImageActor, () )
+    ## Displayed application internals. 
+    _help = HTML(__doc__)
+    
+    scene_model = Instance(MlabSceneModel, ())
+    _bg_image = Instance(ImageActor, ())
     _bg_image_reader = Any()
-    _bw = Instance( tvtk.SphereWidget, () )
-    ## not displayed application internals
+    _bw = Instance(tvtk.SphereWidget, ())
+    
+    ## Not displayed application internals.
     _voronoi_center_list = []
-    _selected_voronoi_center = Any()#Instance( VoronoiCenterVisRep, () )
-    _voronoi_wt = Instance( WalledTissue, () )
-    _voronoi_vtk = Instance(  tvtk.PolyData, () )
-    _voronoi_vtk_ds = Instance( VTKDataSource, ())
+    _selected_voronoi_center = Any()
+    
+    _voronoi_wt = Instance(WalledTissue, ())
+    _voronoi_vtk = Instance(tvtk.PolyData, ())
+    _voronoi_vtk_ds = Instance(VTKDataSource, ())
+    
     _cell_scalars_active = Bool(False)
     _cell_scalars_active_name = Str("custom_cell_property1")
     _cell_scalars_dynamic = Bool(True)
-    #_cell_scalars_opacity = Range(0,1)
+
     _selected_action =  Any()
-    _cell_scalars_range = Array(Float, (2,1) )
+    _cell_scalars_range = Array(Float, (2,1))
+    
     actions = {}
     
-    def voronoi_centers( self ):
-        """Returns a list of positions of voronoi centers.
+    # Init.
+    def __init__(self, voronoi_factory = default_voronoi_factory, cell_properties = {}):
+        super(CompartmentWindow, self).__init__()
         
+        self.voronoi_factory = voronoi_factory
+        self.cell_properties = cell_properties
+        
+        self._voronoi_cell_scalars = None
+    
+    # Returns a list of positions of voronoi centers.
+    def voronoi_centers(self):
+        """Returns a list of positions of voronoi centers.
         :rtype: [(x,y)]
-        :return: A list of positions of voronoi centers in current scene.
-        """
+        :return: A list of positions of voronoi centers in current scene."""
+        
         l = []
         for i in self._voronoi_center_list:
             p = i.position
-            l.append( (p[0], p[1]) )
+            l.append((p[0], p[1]))
+            
         return l                                   
 
+    # Update plot.
     @on_trait_change('voronoi_center_size')
     def update_plot(self):
         for i in self._voronoi_center_list:
-            i.scale=array([self.voronoi_center_size,self.voronoi_center_size, \
-                self.voronoi_center_size])
+            i.scale = array([self.voronoi_center_size, self.voronoi_center_size, self.voronoi_center_size])
+            
         self.scene_model.render()
 
-    
-    def remove_all_voronoi_centers( self, update_vtk_from_voronoi=False ):
-        self.remove_voronoi_centers( self._voronoi_center_list, update_vtk_from_voronoi=False )
-        self.select_voronoi_center( None )
-        #self.update_vtk_from_voronoi( render_scene= render_scene)
+    # Remove all voronoi centers.
+    def remove_all_voronoi_centers(self, update_properties_from_wt2d_to_pm = False):
+        self.remove_voronoi_centers(self._voronoi_center_list, update_properties_from_wt2d_to_pm = False)
+        self.select_voronoi_center(None)
 
-    
-    def add_voronoi_center( self, pos=(0,0,0), render_scene=True, update_vtk_from_voronoi=True ):
+    # Add voronoi center.
+    def add_voronoi_center(self, pos = (0, 0, 0), render_scene = True, update_properties_from_wt2d_to_pm = True):
         vc = self.voronoi_centers()
-        if (pos[0],pos[1]) in vc:
+        
+        if (pos[0], pos[1]) in vc:
             return None
-        s = self.voronoi_factory(resolution=8, radius=1. )
-        s.scale=array([self.voronoi_center_size,self.voronoi_center_size, \
-            self.voronoi_center_size])
+            
+        s = self.voronoi_factory(resolution = 8, radius = 1.)
+        
+        s.scale = array([self.voronoi_center_size, self.voronoi_center_size, self.voronoi_center_size])
         s.position = pos
-        self.scene_model.add_actor( s )
-        self._voronoi_center_list.append( s )
-        if update_vtk_from_voronoi:
-            self.update_vtk_from_voronoi( render_scene=render_scene)
+        
+        self.scene_model.add_actor(s)
+        self._voronoi_center_list.append(s)
+        
+        if update_properties_from_wt2d_to_pm:
+            a = self.actions["actions_add_voronoi_centers"]
+                
+            c1 = a.voronoi_centers_limit_left_bottom_position 
+            c2 = a.voronoi_centers_limit_right_top_position
+            
+            if len(self._voronoi_center_list) > 4:
+                # Create WalledTissue2d from voronoi centers structure.
+                self.create_wt2d_from_vc(remove_infinite_cells = True, constraints = (c1, c2)) 
+
+            # Update properties from WalledTissue2d to polygonal mesh.
+            self.update_properties_from_wt2d_to_pm(render_scene = render_scene, voronoi_changed = True)
+            
         return s
 
-
-    def add_voronoi_centers( self, pos_list=[], render_scene=True, \
-        update_vtk_from_voronoi=True, **kwargs ):
+    # Add voronoi centers.
+    def add_voronoi_centers(self, pos_list = [], render_scene = True, update_properties_from_wt2d_to_pm = True, **kwargs):
         t = []
+        
         for i in pos_list:
-            s = self.voronoi_factory(resolution=8, radius=1., **kwargs )
-            s.scale=array([self.voronoi_center_size,self.voronoi_center_size, \
-                self.voronoi_center_size])
+            s = self.voronoi_factory(resolution = 8, radius = 1., **kwargs)
+            
+            s.scale = array([self.voronoi_center_size, self.voronoi_center_size, self.voronoi_center_size])
             s.position = i
-            self._voronoi_center_list.append( s )
-            t.append( s )
-        self.scene_model.add_actors( t )
-        if update_vtk_from_voronoi: self.update_vtk_from_voronoi( render_scene=render_scene)
+            
+            self._voronoi_center_list.append(s)
+            t.append(s)
+            
+        self.scene_model.add_actors(t)
+        
+        if update_properties_from_wt2d_to_pm:
+            a = self.actions["actions_add_voronoi_centers"]
+                
+            c1 = a.voronoi_centers_limit_left_bottom_position 
+            c2 = a.voronoi_centers_limit_right_top_position
+            
+            if len(self._voronoi_center_list) > 4:
+                # Create WalledTissue2d from voronoi centers structure.
+                self.create_wt2d_from_vc(remove_infinite_cells = True, constraints = (c1, c2)) 
 
+            # Update properties from WalledTissue2d to polygonal mesh.
+            self.update_properties_from_wt2d_to_pm(render_scene = render_scene, voronoi_changed = True)
 
-    def select_voronoi_center( self, voronoi_center ):
+    # Select voronoi center.
+    def select_voronoi_center(self, voronoi_center):
         if voronoi_center:
             self._bw.prop3d = voronoi_center
             self._bw.center = voronoi_center.position
-            # hack to avoid crash
-            self._bw.place_widget(-2.,-1.,-2.,-1.,-2.,-1.)
+            
+            # Hack to avoid crash.
+            self._bw.place_widget(-2., -1., -2., -1., -2., -1.)
+            
             self.scene_model.render()
             self._bw.place_widget()
             self.scene_model.render()
+            
         self._selected_voronoi_center = voronoi_center
 
-
-    def remove_voronoi_center( self, voronoi_center, render_scene=True, update_vtk_from_voronoi=True ):
-        self._voronoi_center_list.remove( voronoi_center )
-        self.scene_model.remove_actor( voronoi_center )
+    # Remove voronoi center.
+    def remove_voronoi_center(self, voronoi_center, render_scene = True, update_properties_from_wt2d_to_pm = True):
+        self._voronoi_center_list.remove(voronoi_center)
+        self.scene_model.remove_actor(voronoi_center)
+        
         if self._voronoi_center_list:
-            self.select_voronoi_center( self._voronoi_center_list[ 0 ] )
+            self.select_voronoi_center(self._voronoi_center_list[0])
         else:
-            self.select_voronoi_center( None )
-        if update_vtk_from_voronoi:
-            self.update_vtk_from_voronoi( render_scene= render_scene)
+            self.select_voronoi_center(None)
+            
+        if update_properties_from_wt2d_to_pm:
+            a = self.actions["actions_add_voronoi_centers"]
+                
+            c1 = a.voronoi_centers_limit_left_bottom_position 
+            c2 = a.voronoi_centers_limit_right_top_position
+            
+            if len(self._voronoi_center_list) > 4:
+                # Create WalledTissue2d from voronoi centers structure.
+                self.create_wt2d_from_vc(remove_infinite_cells = True, constraints = (c1, c2)) 
 
+            # Update properties from WalledTissue2d to polygonal mesh.
+            self.update_properties_from_wt2d_to_pm(render_scene = render_scene, voronoi_changed = True)
 
-
-    def remove_voronoi_centers( self, voronoi_center_list=[], render_scene=True, update_vtk_from_voronoi=True ):
-        for i in voronoi_center_list:
-            self._voronoi_center_list = []
-        self.select_voronoi_center( None )
+    # Remove voronoi centers.
+    def remove_voronoi_centers(self, voronoi_center_list = [], render_scene = True, update_properties_from_wt2d_to_pm = True):
+        self._voronoi_center_list = []
+            
+        self.select_voronoi_center(None)
+        
         self.scene_model.disable_render = True
-        self.scene_model.remove_actors( voronoi_center_list )
+        self.scene_model.remove_actors(voronoi_center_list)
         self.scene_model.disable_render = False
-        if render_scene: self.scene_model.render()
-        if update_vtk_from_voronoi: self.update_vtk_from_voronoi( render_scene= render_scene)
         
+        if render_scene: 
+            self.scene_model.render()
+            
+        if update_properties_from_wt2d_to_pm:
+            a = self.actions["actions_add_voronoi_centers"]
+                
+            c1 = a.voronoi_centers_limit_left_bottom_position 
+            c2 = a.voronoi_centers_limit_right_top_position
+            
+            if len(self._voronoi_center_list) > 4:
+                # Create WalledTissue2d from voronoi centers structure.
+                self.create_wt2d_from_vc(remove_infinite_cells = True, constraints = (c1, c2)) 
 
-    def register_actions( self ):        
-        file_load_background_image = FileLoadBackgroundImage(
-                parent=self,
-                name = "Load background",
-                toolip = "Loads background image file to the current scene",            
-                action = "self.perform",
-        )
-        self.actions["file_load_background_image"] =file_load_background_image
+            # Update properties from WalledTissue2d to polygonal mesh.
+            self.update_properties_from_wt2d_to_pm(render_scene = render_scene, voronoi_changed = True)
         
-        actions_update_voronoi_edges = ActionsUpdateVoronoiEdges(
-            parent=self,
-            name = "Update edges",
-            toolip = "Updates voronoi edges", 
-            action = "self.perform",
-        )
-        self.actions["actions_update_voronoi_edges"] =actions_update_voronoi_edges
-
-
-    def display_tissue_scalar_properties( self, property, render_scene=True, voronoi_changed=False ):
+    # Display tissue scalar properties.    
+    def display_tissue_scalar_properties(self, property, render_scene = True, voronoi_changed = False):
         if voronoi_changed:
-            # print "voronoi changed"
-            #updates the WalledTissue properties with voronoi centers
-            synchronize_id_of_wt_and_voronoi(self._voronoi_wt, self._voronoi_center_list)
-            copy_cell_properties_from_voronoi_to_wt( self._voronoi_wt, \
-                self._voronoi_center_list, self.cell_properties )
+            print "voronoi changed"
+            
+            # Update properties from voronoi centers to WalledTissue2d.
+            self.update_properties_from_vc_to_wt2d(self._voronoi_wt, self._voronoi_center_list, self.cell_properties)
     
         t = self._voronoi_wt
-        cell_nbr = len( t.cells() )
-        prop_value = zeros( cell_nbr )
+        cell_nbr = len(t.cells())
+        prop_value = zeros(cell_nbr)
+        
         max = -inf
         min = inf
-        for i in range( cell_nbr ):
-            p = t.cell_property( self._cell_id_vtk2wt[ i ], property )
-            prop_value[ i ] = p
+        
+        for i in range(cell_nbr):
+            p = t.cell_property(self._cell_id_vtk2wt[i], property)
+            
+            prop_value[i] = p
+            
             if p > max: max = p
             if p < min: min = p
         
         self._voronoi_vtk.cell_data.scalars = prop_value
         self._voronoi_vtk.cell_data.scalars.name = property
         
-        #engine.mlab.get_engine()
-        #module_manager = engine.scenes[0].children[0].children[0]
         self._voronoi_cell_polygons.parent.scalar_lut_manager.use_default_range = False
+        
         if not self._cell_scalars_dynamic:
             self._voronoi_cell_polygons.parent.scalar_lut_manager.data_range = \
-                array( \
-                    [ float( self._cell_scalars_range[ 0 ]), \
-                    float( self._cell_scalars_range[ 1 ]) ] \
-                )
+                array([float(self._cell_scalars_range[0]), float(self._cell_scalars_range[1])])
         else:
             self._voronoi_cell_polygons.parent.scalar_lut_manager.data_range = \
-                array( [ min, max ] )
+                array([min, max])
             
-        if render_scene: self._voronoi_vtk_ds.update()  
+        if render_scene: 
+            self._voronoi_vtk_ds.update()
 
+    # Update colormap.
     @on_trait_change('_cell_scalars_active')
-    def update_colormap( self, render_scene = True, voronoi_changed=True):
+    def update_colormap(self, render_scene = True, voronoi_changed = True):
         if self._cell_scalars_active:
             if self._cell_scalars_active_name in self.cell_properties.keys():
-                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
-                if render_scene: self.scene_model.render()
+                self.display_tissue_scalar_properties(self._cell_scalars_active_name, render_scene = False, voronoi_changed = voronoi_changed)
+                
+                if render_scene: 
+                    self.scene_model.render()
     
-    def update_vtk_from_voronoi( self, render_scene = True, voronoi_changed=False ):
-        # TODO
-        #print 4,self._voronoi_wt.const.cell_properties
-        #print 4,self._voronoi_wt._cell2properties[0]
-        d = walled_tissue2vtkPolyData( self._voronoi_wt )
-        #print 3,self._voronoi_wt.const.cell_properties
-        #print 3,self._voronoi_wt._cell2properties[0]
+    
+    #--- Synchronization methods.
+    
+    # Update properties from WalledTissue2d to voronoi centers structure.
+    def update_properties_from_wt2d_to_vc(self, wt2d, vc, properties):
+        """Copies cell properties from WalledTissue2d to voronoi structure.
+        :parameters:
+            wt2d : `WalledTissue2d`
+                Source of properties.
+            vc : []
+                Target of properties.
+            properties : {}
+                Properties to be synchronize."""
+        
+        synchronize_id_of_wt_and_voronoi(wt2d, vc)
+
+        if not properties is None:
+            for i in properties:
+                try:
+                    for j in vc:
+                        if j.cell_id != -1:
+                            j.__setattr__(i, wt2d.cell_property(j.cell_id, i))
+                            
+                except TraitError:
+                    print " !: problem while synchronising wt2d->vc:", i  
+    
+    
+    # Update properties from voronoi centers structure to WalledTissue2d.
+    def update_properties_from_vc_to_wt2d(self, wt2d, vc, properties, init_properties = True):
+        """Copies cell properties from voronoi structure to WalledTissue2d.
+        :parameters:
+            wt2d : `WalledTissue2d`
+                Source of properties.
+            vc : []
+                Target of properties.
+            properties : {}
+                Properties to be synchronized."""
+        
+        synchronize_id_of_wt_and_voronoi(wt2d, vc)
+
+        if not properties is None:
+            for i in properties:
+                if init_properties:
+                    wt2d.init_cell_property(i, properties[i])
+                    
+                try:
+                    for j in vc:
+                        if j.cell_id != -1:
+                            wt2d.cell_property(j.cell_id, i, j.__getattribute__(i))
+                            
+                except AttributeError:
+                    print " !: problem while synchronising vc->wt2d:", i
+    
+    
+    # Update properties from WalledTissue2d to polygonal mesh.
+    def update_properties_from_wt2d_to_pm(self, render_scene = True, voronoi_changed = False):
+        d = self.create_pm_from_wt2d(self._voronoi_wt)
+
         self._voronoi_vtk = d["tissue"]
+        
         self._cell_id_vtk2wt = d["cell_id_vtk2wt"]
         self._cell_id_wt2vtk = d["cell_id_wt2vtk"]
+        
         self._wv_id_wt2vtk = d["wv_id_wt2vtk"]
         self._wv_id_vtk2wv = d["wv_id_vtk2wt"]
+        
         if not self._voronoi_vtk_ds:
-            self._voronoi_vtk_ds = VTKDataSource(data=self._voronoi_vtk)
+            self._voronoi_vtk_ds = VTKDataSource(data = self._voronoi_vtk)
+            
             engine = mlab.get_engine()
-            engine.add_source( self._voronoi_vtk_ds ) 
-            self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity=0.99)
-            self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds),
-                                    color=(0, 0, 0), )
+            engine.add_source(self._voronoi_vtk_ds)
+            
+            self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity = 0.99)
+            self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds), color = (0, 0, 0))
         else:
             self._voronoi_vtk_ds.data = self._voronoi_vtk
             self._voronoi_vtk_ds.update()
+            
         if self._cell_scalars_active:
             if self._cell_scalars_active_name in self.cell_properties.keys():
-                self.display_tissue_scalar_properties( self._cell_scalars_active_name, render_scene=False, voronoi_changed=voronoi_changed )
+                self.display_tissue_scalar_properties(self._cell_scalars_active_name, render_scene = False, voronoi_changed = voronoi_changed)
+                
         if render_scene: self.scene_model.render()
-
-
-        
-    def __init__( self, voronoi_factory=default_voronoi_factory, cell_properties={} ):
-        super(CompartmentWindow, self).__init__()
-        self.voronoi_factory = voronoi_factory
-        self.cell_properties = cell_properties
-        self._voronoi_cell_scalars = None
-        #self.register_actions()
-
-
-#----------------------------------------------------------------------------- IO OPERATIONS
-
-class FileLoadBackgroundImage(MyAction):
-    def perform(self):
-        """Pops up a dialog used to load a background image."""
-        extns = ['*.bmp','*.png','*.tif','*.jpg','*']
-        dlg = FileDialog( action='open',
-                wildcard='*', title="Load image")
-        
-        if dlg.open() == OK:
-            self.load_image( dlg.path )
-                
-    def load_image( self, file_name ):
-        """Loads image to GUI"""
-        a = self._application
-        engine = mlab.get_engine()
-        if not a._bg_image_reader:
-            a._bg_image_reader = engine.open( file_name )
-            a._bg_image = mlab.pipeline.image_actor( a._bg_image_reader )
-        else:
-            a._bg_image.remove()
-            a._bg_image_reader.remove()
-            a._bg_image_reader = engine.open( file_name )
-            a._bg_image = mlab.pipeline.image_actor( a._bg_image_reader )
-            #a._bg_image_reader.file_path = FilePath( file_name )
-        a._bg_image.module_manager.scalar_lut_manager.lut_mode = 'gray'
-        
-        #engine.add_filter(a._bg_image, image_reader)
-        (x1,x2) = a._bg_image.actor.x_range
-        (y1,y2) = a._bg_image.actor.y_range
-        if a.actions.has_key( "action_add_voronoi_centers" ):
-            act = a.actions[ "action_add_voronoi_centers" ]
-            a._cut_plane.place_widget(x1,x2,y1,y2,0.,0.)
-            act.voronoi_centers_limit_left_bottom_position = (x1,y1)
-            act.voronoi_centers_limit_right_top_position = (x2,y2)
-        return a._bg_image_reader
-        
-
-
-class FileLoadWalledTissue(MyAction):
-    def perform(self):
-        """Pops up a dialog used to load WalledTissue"""
-        a = self._application
-        dlg = DirectoryDialog( action='open',
-                wildcard='*', title="Load WalledTissue")
-        
-        if dlg.open() == OK:
-            self.load( dlg.path )
-            
-    def load( self, path):
-            a = self._application
-            # TODO: add reading properties to voronoi center class
-            a.remove_all_voronoi_centers( update_vtk_from_voronoi=False )
-            a._voronoi_wt = read_walled_tissue( file_name=path  )
-                
-            pos_list = []
-            for i in a._voronoi_wt.cells():
-                pos_list.append( a._voronoi_wt.cell_property(i, "voronoi_center" ) )
-            for i in a._voronoi_wt.tissue_property("outside_voronoi_centers"):
-                pos_list.append( i )
-            
-            a.add_voronoi_centers( pos_list=pos_list, render_scene=False, \
-                update_vtk_from_voronoi=False )
-
-            #updates the properties of voronoi centers with WalledTissue properties 
-
-            synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-            copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, \
-                a._voronoi_center_list, a._voronoi_wt.const.cell_properties )
-            #print 1,a._voronoi_wt.const.cell_properties
-            #print 1,a._voronoi_wt._cell2properties[0]
-            a.update_vtk_from_voronoi(voronoi_changed = False)
-            #print 2,a._voronoi_wt.const.cell_properties
-            #print 2,a._voronoi_wt._cell2properties[0]
-
-#----------------------------------------------------------------------------- SHARED ACTIONS
     
-class ActionsUpdateVoronoiEdges(MyAction):
-    """ Produces and displays the voronoi edges. """
-    def perform_calc(self):
-        """ Performs the action. """
-        a = self._application
-        a.update_vtk_from_voronoi( render_scene=True )
+    
+    # Create WalledTissue2d from voronoi centers structure.
+    def create_wt2d_from_vc(self, tissue_properties = None, remove_infinite_cells = False, constraints = None):
+        """Allows to create the WalledTissue based on the information
+        from two files: first one containg definitions of voronoi centers
+        in the rbox format, second one containing the computed voronoi
+        vertices (by qvoronoi).
         
+        <Long description of the function functionality.>
+        :parameters:
+            arg1 : `T`
+                <Description of `arg1` meaning>
+        :rtype: `T`
+        :return: <Description of ``return_object`` meaning>
+        :raise Exception: <Description of situation raising `Exception`>"""
         
-class ActionsDefineCellTypes(MyAction):
-    cell_type = Str("B")
-    filename = Str("")
-    load_filename = Button( label='Select file' )
-
-
-    def __init__(self, **kwargs):
-        """Init"""
-        super(ActionsDefineCellTypes, self).__init__( **kwargs )
-        #self.expression_name = Enum( kwargs["cell_properties"].keys() )
+        (voronoi_centers, voronoi_edges) = voronoi_centers_to_edges(self.voronoi_centers())
         
-    def perform_calc(self):
-        """Calculate average expression level based on the image.""" 
-        a = self._application
-        t = a._voronoi_wt
+        self._voronoi_wt = read_qhull2walled_tissue(voronoi_centers, voronoi_edges, tissue_properties, remove_infinite_cells, constraints)
+    
+    
+    # Create polygonal mesh from WalledTissue2d.
+    def create_pm_from_wt2d(self, wt2d = None):
+        """Converts WalledTissue2d to vtkPolyData.
+        <Long description of the function functionality.>
+        :parameters:
+            wt2d : `walled_tissue`
+                Walled tissue to be converted.
+        :rtype: `vtkPolyData`
+        :return: Converted tissue."""
         
-        # checking if there is one cell or more
-        if len( t.cells() ) == 0:
-            print " !: Add more voronoi centers to have non empty mesh"
-            return
-
-
-        synchronize_id_of_wt_and_voronoi(a._voronoi_wt, a._voronoi_center_list)
-        self.vc2cell_type = {}
-        for i in a._voronoi_center_list:
-            self.vc2cell_type[ i.cell_id ] = i.cell_type
+        # Setting wvs.
+        wvs = tvtk.Points()
         
-        try:
-            #TODO: add searching for nb. of proc.
-            limit = 8
-            import pprocess
-            results = pprocess.pmap(self.define_cell_type, t.cells(), limit=limit)
-            for i in results:
-                t.cell_property( i[0], i[1], i[2] )
-        except Exception:
-            print " #: Warning: not using multiple cores. Verify python-pprocess installation.."
-            for i in t.cells():
-                j = self.define_cell_type( i )
-                t.cell_property( j[0], j[1], j[2] )
+        wv_id_wt2vtk = {}
+        wv_id_vtk2wt = {}
         
-        copy_cell_properties_from_wt_to_voronoi( a._voronoi_wt, a._voronoi_center_list, ['cell_type'])
-
-    def define_cell_type( self, cell ):
-        a = self._application
-        t = a._voronoi_wt
-        img = a._bg_image
-        cs = t.cell2wvs( cell )
-        cs_pos = map( t.wv_pos, cs)
-        pl = int_points_in_polygon( cs_pos )
-        exp = 0.
-        for j in pl:
-            ind = img.actor.input.find_point(j[0], j[1], 0)
-            d = img.actor.input.point_data.scalars[ ind ]
-            try: exp += d[ 0 ] + d[ 1 ] + d[ 2 ]
-            except TypeError: exp += d 
-            if exp > 0: break
-        if exp > 0:    
-            t.cell_property( cell, "cell_type", self.cell_type )
-            return cell, "cell_type", self.cell_type
-        else:
-            t.cell_property( cell, "cell_type",  self.vc2cell_type[ cell ] )
-            return cell, "cell_type", self.vc2cell_type[ cell ]
-
-    def default_traits_view( self ):
-        """Description of default view.
-        """
-        view = \
-        View(
-            VGroup(
-                #Item(
-                #    "expression_name",
-                #    #editor=InstanceEditor(),
-                #    style='simple',
-                #),
-                Item(
-                    "cell_type",
-                    label = "Cell type",
-                ),
-                #HGroup(
-                #    Item(
-                #        "filename"
-                #    ),
-                #    Item(
-                #        "load_filename"
-                #    ),
-                #),
-                Item(
-                    "perform_btn",
-                    show_label = False,               
-                ),
-                show_border = True,
-                label = 'Define cell types',
-            ),
-        )
-        return view
-
-    def _load_filename_fired( self ):
-        """Runs default action.
-        """
-        a = self._application
-        dlg = FileDialog( action='open',
-                wildcard='*', title="Load binary image")
+        for i in wt2d.wvs():
+            wvs.insert_point(i, tuple(wt2d.wv_pos(i))) 
+            
+            id = i
+            
+            wv_id_vtk2wt[id] = i
+            wv_id_wt2vtk[i] = id
+            
+        cell_id_wt2vtk = {}
+        cell_id_vtk2wt = {}
         
-        if dlg.open() == OK:
-            self.filename = dlg.path
+        cells = tvtk.CellArray()
+        
+        for i in wt2d.cells():
+            cs = wt2d.cell2wvs(i)
+            id = cells.insert_next_cell(len(cs))
+            
+            for j in cs:
+                cells.insert_cell_point(j)
+                
+            cell_id_wt2vtk[i] = id
+            cell_id_vtk2wt[id] = i
+        
+        tissue = tvtk.PolyData(points = wvs, polys = cells)
+
+        return {
+            "tissue": tissue,
+            "cell_id_vtk2wt": cell_id_vtk2wt,
+            "cell_id_wt2vtk": cell_id_wt2vtk,
+            "wv_id_vtk2wt": wv_id_vtk2wt,
+            "wv_id_wt2vtk": wv_id_wt2vtk,
+        }
+
