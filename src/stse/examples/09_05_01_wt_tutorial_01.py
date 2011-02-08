@@ -25,12 +25,12 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 __revision__="$Id$"
 __svn_revision__= "5"
-
+#WP
 from openalea.stse.structures.walled_tissue import WalledTissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst
 from openalea.stse.structures.algo.walled_tissue import create
 from openalea.plantgl.math import Vector3
-
+#WP
 # we define the set of settings for a tissue
 wtc = WalledTissueConst( name = "Tissue01")
 # we declare the set of properties for every cell i.e.
