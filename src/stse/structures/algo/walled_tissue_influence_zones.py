@@ -40,7 +40,7 @@ def set_property_on_tissue_component( wt=None, cell=None, f_component=None, tol=
     """
     
     from networkx import DiGraph
-    from networkx.search import dfs_preorder
+    from networkx import dfs_preorder
     g=DiGraph()
     
     #initialization cell

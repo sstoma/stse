@@ -21,7 +21,8 @@ __license__="Cecill-C"
 __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
-__svn_revision__= "15"
+__svn_revision__= "209"
+__run_command__ = "ipython -qthread (when shell starts use run)"
 
 from openalea.stse.structures.walled_tissue import WalledTissue
 from openalea.stse.structures.walled_tissue_const import WalledTissueConst
