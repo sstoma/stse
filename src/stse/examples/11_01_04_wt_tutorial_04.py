@@ -37,7 +37,7 @@ if __name__ == '__main__':
     a2 = window.actions['file_load_walled_tissue']
     
     # Loading geometry.
-    a2.load(join(stse_path, data_dir, tissue_filename))
+    a2._load(join(stse_path, data_dir, tissue_filename))
     
     # Proxy to tissue.
     mesh = window._voronoi_wt

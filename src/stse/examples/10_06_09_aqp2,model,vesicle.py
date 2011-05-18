@@ -2,9 +2,10 @@ __doc__ = """This is the file for test aqp simulation in a cell
 """
 
 # working with svn version:
-stse_svn_revision = 0
+__svn_revision__= "211"
+__run_command__ = "ipython -wthread (when shell starts use 'run file_name')"
 
-from openalea.stse.gui.compartment_viewer import start_gui
+from openalea.stse.gui.compartment_editor import start_gui
 from openalea.stse.structures.algo.walled_tissue import avg_cell_property
 
     
@@ -24,10 +25,10 @@ import os
 import scipy
 import scipy.integrate.odepack
 
-from openalea.stse.gui.compartment_editor import ExampleWindow, VoronoiCenterVisRep, \
+from openalea.stse.gui.compartment_editor import  VoronoiCenterVisRep, \
     default_voronoi_factory
 from openalea.stse.gui.compartment_viewer import CompartmentViewerWindow
-from openalea.stse.gui.compartment_editor import default_voronoi_factory
+from openalea.stse.gui.compartment_editor import default_voronoi_factory, CompartmentEditorWindow
 
 from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface,\
     calculate_wall_length, cell_edge2wv_edge, cell_centers
@@ -44,7 +45,7 @@ def start_editor(  ):
 
     """
     # Create and open an application window.
-    window = ExampleWindow( voronoi_factory=voronoi_factory, \
+    window = CompartmentEditorWindow( voronoi_factory=voronoi_factory, \
         cell_properties=cell_properties)
     window.edit_traits()
     window.do()
@@ -219,6 +220,6 @@ if __name__ == '__main__':
     a5 = window.actions[ 'file_save_walled_tissue' ]
     
     # loading geometry
-    a1.load_image( data_dir+"/scene-0.png" )
+    a1._load_image( data_dir+"/scene-0.png" )
 
     

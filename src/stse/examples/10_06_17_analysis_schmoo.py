@@ -2,7 +2,8 @@ __doc__ = """This is the file demonstrating how to inspect STSE WalledTissue2D s
 """
 
 # working with svn version:
-stse_svn_revision = 54
+__svn_revision__= "211"
+__run_command__ = "ipython -wthread (when shell starts use 'run file_name')"
 
 from openalea.stse.gui.compartment_viewer import start_gui
 from openalea.stse.structures.algo.walled_tissue import avg_cell_property
@@ -130,8 +131,8 @@ if __name__ == '__main__':
     a5 = window.actions[ 'file_save_walled_tissue' ]
     
     # loading geometry
-    a1.load_image( data_dir+"/"+expression_data_files[ 0 ]+'0'+".png" )
-    a2.load( data_dir+"/"+expression_data_files[ 0 ]+"-auto" )
+    a1._load_image( data_dir+"/"+expression_data_files[ 0 ]+'0'+".png" )
+    a2._load( data_dir+"/"+expression_data_files[ 0 ]+"-auto" )
     
     # proxy
     mesh = window._voronoi_wt

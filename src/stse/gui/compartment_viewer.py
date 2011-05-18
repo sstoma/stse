@@ -75,10 +75,10 @@ class FileLoadBackgroundImage(MyAction):
                 wildcard = '*', title = "Load image")
         
         if dlg.open() == OK:
-            self.__load_image(dlg.path)
+            self._load_image(dlg.path)
     
     # Private method called by perform button.
-    def __load_image(self, file_name):
+    def _load_image(self, file_name):
         """Loads image to GUI."""
         a = self._application
         engine = mlab.get_engine()
@@ -137,10 +137,10 @@ class FileLoadWalledTissue(MyAction):
                 wildcard = '*', title = "Load WalledTissue")
         
         if dlg.open() == OK:
-            self.load(dlg.path)
+            self._load(dlg.path)
     
     # Method called by perform button.
-    def load(self, path):
+    def _load(self, path):
             """Load WalledTissue."""
             a = self._application
             

@@ -21,7 +21,8 @@ __license__="Cecill-C"
 __date__="Fri Jun 19 16:02:57 CEST 2009"
 __version__="0.1"
 __docformat__= "restructuredtext en"
-__svn_revision__= "15"
+__svn_revision__= "211"
+__run_command__ = "ipython -q4hread (when shell starts use 'run file_name')"
 
 from openalea.stse.io.walled_tissue.dat_representation import read_dat2walled_tissue, read_link_file
 import openalea.plantgl.all as pgl

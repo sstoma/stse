@@ -247,7 +247,7 @@ class MyAction(Action):
     # Runs default action.
     def _perform_btn_fired(self):
         """Runs default action."""
-        self.perform_calc()
+        self._perform_calc()
 
     # Perform calc button.
     def perform_calc(self):

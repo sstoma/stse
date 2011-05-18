@@ -75,13 +75,13 @@ class FileLoadBackgroundImage(MyAction):
                 wildcard = '*', title = "Load image")
         
         if dlg.open() == OK:
-            self.__load_image(dlg.path)
+            self._load_image(dlg.path)
     
     # Private method called by perform button.
-    def __load_image(self, file_name):
+    def _load_image(self, file_name):
         """Loads image to GUI."""
         a = self._application
-        engine = mlab.get_engine()
+        engine = mlab.get_engine() 
         
         if not a._bg_image_reader:
             a._bg_image_reader = engine.open(file_name)
@@ -119,10 +119,10 @@ class FileSaveWalledTissue(MyAction):
                 wildcard = '*', title = "Save WalledTissue")
         
         if dlg.open() == OK:
-            self.__save(dlg.path)
+            self._save(dlg.path)
     
     # Private method called by perform button.
-    def __save(self, file_name):
+    def _save(self, file_name):
         """Save WalledTissue."""
         a = self._application
         t = a._voronoi_wt
@@ -157,10 +157,10 @@ class FileLoadWalledTissue(MyAction):
                 wildcard = '*', title = "Load WalledTissue")
         
         if dlg.open() == OK:
-            self.__load(dlg.path)
+            self._load(dlg.path)
     
     # Private method called by perform button.
-    def __load(self, path):
+    def _load(self, path):
             """Load WalledTissue."""
             a = self._application
             
@@ -524,14 +524,14 @@ class ActionsCalculateAverageExpression(MyAction):
             print "#: Waning: not using multiple cores. Verify python-pprocess installation..."
             
             for i in t.cells():
-                j = self.__calculate_expression_in_cell(i)
+                j = self._calculate_expression_in_cell(i)
                 t.cell_property(j[0], j[1], j[2])
         
         # Update properties from WalledTissue2d to voronoi centers structure.
         a.update_properties_from_wt2d_to_vc(a._voronoi_wt, a._voronoi_center_list, [self.expression_name])
         
     # Private method called by perform button.
-    def __calculate_expression_in_cell(self, cell):
+    def _calculate_expression_in_cell(self, cell):
         """Caluculates average expression in given cell."""
         a = self._application
         t = a._voronoi_wt
@@ -626,14 +626,14 @@ class ActionsDefineCellTypes(MyAction):
             print "#: Warning: not using multiple cores. Verify python-pprocess installation..."
             
             for i in t.cells():
-                j = self.__define_cell_type(i)
+                j = self._define_cell_type(i)
                 t.cell_property(j[0], j[1], j[2])
         
         # Update properties from WalledTissue2d to voronoi centers structure.
         a.update_properties_from_wt2d_to_vc(a._voronoi_wt, a._voronoi_center_list, ['cell_type'])
 
     # Private method called by perform button.
-    def __define_cell_type(self, cell):
+    def _define_cell_type(self, cell):
         """Define cell type."""
         a = self._application
         t = a._voronoi_wt
@@ -732,7 +732,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_add_voronoi_centers"] = ActionsAddVoronoiCenters(
             parent = self,
             name = "Add voronoi centers",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Adds  voronoi centers to the current scene.",
         )
         
@@ -740,7 +740,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_update_voronoi_edges"] = ActionsUpdateVoronoiEdges(
             parent = self,
             name = "Update voronoi edges",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Update voronoi edges.",
         )
 
@@ -748,7 +748,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_add_membrane"] = ActionsAddMembrane(
             parent = self,
             name = "Add membrane",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Adds voronoi centers creating thin membrane between points.", 
         )
         
@@ -756,7 +756,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_clean_voronoi"] = ActionsCleanVoronoi(
             parent = self,
             name = "Removes voronoi placed too close to each other",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Removes voronoi closer than given distance to each other.", 
         )
         
@@ -764,7 +764,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_calculate_average_expression"] = ActionsCalculateAverageExpression(
             parent = self,
             name = "Calculates expressions",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Calculates the avarege expression for each cell in a mesh based on the image.", 
             cell_properties = self.cell_properties,
         )
@@ -773,7 +773,7 @@ class CompartmentEditorWindow(CompartmentWindow):
         self.actions["actions_define_cell_types"] = ActionsDefineCellTypes(
             parent = self,
             name = "Define cell types",
-            action = "self.perform_calc",
+            action = "self._perform_calc",
             toolip = "Allows to define cell types from a file.", 
         )
         

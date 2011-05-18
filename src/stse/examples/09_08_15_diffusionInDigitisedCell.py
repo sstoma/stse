@@ -21,6 +21,17 @@ __license__="Cecill-C"
 __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
+__svn_revision__= "211"
+__run_command__ = """
+ipython -wthread
+(when shell starts use 'run file_name')
+open an background image (go to $STSE_DATA/data/data/09-08-14-prostateCancerCell/ProstateCancerCell.png)
+open a saved tissue:  $STSE_DATA/data/data/09-08-14-prostateCancerCell/initial_tissue_with_membranes
+change a substance concentation using GUI
+run simulation of diffusion:
+da = DiffusionAction(window=window)
+da.stable_step()
+"""
 
 
 
@@ -37,10 +48,10 @@ import numpy as np
 import scipy
 import scipy.integrate.odepack
 
-from openalea.stse.gui.compartment_editor import ExampleWindow, VoronoiCenterVisRep, \
+from openalea.stse.gui.compartment_editor import VoronoiCenterVisRep, \
     default_voronoi_factory
 from openalea.stse.gui.compartment_viewer import CompartmentViewerWindow
-from openalea.stse.gui.compartment_editor import default_voronoi_factory
+from openalea.stse.gui.compartment_editor import default_voronoi_factory, CompartmentEditorWindow
 
 from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface,\
     calculate_wall_length, cell_edge2wv_edge, cell_centers
@@ -125,7 +136,7 @@ def start_editor(  ):
 
     """
     # Create and open an application window.
-    window = ExampleWindow( voronoi_factory=voronoi_factory, \
+    window = CompartmentEditorWindow( voronoi_factory=voronoi_factory, \
         cell_properties=cell_properties)
     window.edit_traits()
     window.do()
@@ -291,5 +302,5 @@ class DiffusionAction:
 if __name__ == '__main__':
     window = start_editor()
     #window = start_viewer()
-    #da = DiffusionAction(wt=window._voronoi_wt)
+    #da = DiffusionAction(window=window)
     
