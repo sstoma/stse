@@ -16,7 +16,8 @@ __version__="0.1"
 __docformat__= "restructuredtext en"
 
 # Working with svn version:
-stse_svn_revision = 136
+__svn_revision__= "211"
+__run_command__ = "ipython -wthread (when shell starts use 'run file_name')"
 
 from os.path import join
 import os
