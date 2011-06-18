@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mencoder mf://@list.txt -mf w=800:h=600:fps=6:type=png -ovc lavc -lavcopts vcodec=msmpeg4:mbd=2:trell -oac copy -o output.avi
