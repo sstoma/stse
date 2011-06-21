@@ -149,7 +149,7 @@ class VoronoiCenterVisRepGeneral(VoronoiCenterVisRep):
     # Prepare default view.
     def default_traits_view(self):    
         view = View(
-            Item("cell_id", style = 'readonly'),
+            Item("cell_id", style = 'simple'),
             Item("cell_type", style = 'simple'),
             Item("custom_cell_property1", style = 'simple'),
             Item("custom_cell_property2", style = 'simple'),
@@ -605,7 +605,7 @@ The Voronoi diagram is created only for centers inside given insets. These inset
     
     
     # Update properties from WalledTissue2d to polygonal mesh.
-    def update_properties_from_wt2d_to_pm(self, render_scene = True, voronoi_changed = False):
+    def update_properties_from_wt2d_to_pm(self, render_scene = True, voronoi_changed = False, color=(0, 0, 0)):
         d = self.create_pm_from_wt2d(self._voronoi_wt)
 
         self._voronoi_vtk = d["tissue"]
@@ -623,7 +623,7 @@ The Voronoi diagram is created only for centers inside given insets. These inset
             engine.add_source(self._voronoi_vtk_ds)
             
             self._voronoi_cell_polygons = mlab.pipeline.surface(self._voronoi_vtk_ds, opacity = 0.99)
-            self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds), color = (0, 0, 0))
+            self._voronoi_cell_edges = mlab.pipeline.surface(mlab.pipeline.extract_edges(self._voronoi_vtk_ds), color = color)
         else:
             self._voronoi_vtk_ds.data = self._voronoi_vtk
             self._voronoi_vtk_ds.update()

@@ -8,6 +8,8 @@ WalledTissue DS.
 :version: 2006-07-15 15:21:06CEST
 :author: szymon stoma
 """
+import openalea.plantgl.all as pgl
+from openalea.stse.structures.algo.walled_tissue import  cell_center
 
 class SimulationRemoveCellStrategy:
     """Interface
@@ -28,4 +30,16 @@ class SimulationRemoveCellStrategy:
         return
     
 
+class RemoveBasedOnDistance(SimulationRemoveCellStrategy):
+    def cells_to_remove( self ):
+        l=[]
+        for i in self.system.cells():
+            if pgl.norm(cell_center(self.system, i) - self.center) > self.distance:
+                l.append(i)
+        return l
+        
 
+    def __init__( self, system=None, center=pgl.Vector3(), distance=1. ):
+        self.system = system
+        self.distance = distance
+        self.center = center

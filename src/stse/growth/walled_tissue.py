@@ -28,7 +28,8 @@ __date__="Tue Feb  1 19:40:48 CET 2011"
 __version__="0.1"
 __docformat__= "restructuredtext en"
 
-
+import openalea.plantgl.all as pgl
+import math
 from openalea.stse.structures.algo.walled_tissue import calculate_cell_surface,\
     calculate_cell_surfaceS, calculate_cell_perimiter
 
@@ -41,7 +42,14 @@ def tgs_linear_growth (wt2d, center, steps, growth_factor):
 		for i in wt2d.wvs():
 			wt2d.wv_pos( i, wt2d.wv_pos( i ) - (center -  wt2d.wv_pos( i ) ) * growth_factor )
 
-
+## Growth strategy function: cuadratic
+#def tgs_quadratic_growth (wt2d, center, steps, growth_factor):
+#	"""Increases the size of cell in defined as paramater number of steps and growth_factor.
+#	"""
+#	for steps_counter in range(steps):
+#		for i in wt2d.wvs():
+#			wt2d.wv_pos( i, wt2d.wv_pos( i ) - (center -  wt2d.wv_pos( i ) )* growth_factor )
+			
 # Cell selection functions
 #earlier cds_size
 def scs_surface (wt2d, size):
@@ -75,20 +83,18 @@ def scs_prop_greater (wt2d, prop, value):
 
 # Check and divide functions
 #earlier divide_by_surface
-def chd_surface(wt2d, max_surface, divide_strategy):
+def chd_surface(wt2d, max_surface, divide_strategy, pre_fun=None, post_fun=None):
 	"""Dividing cells which has higher surface than max_surface"""
 	cells_to_divide = scs_surface(wt2d, max_surface)
-	if cells_to_divide:
-		cell_to_divide_index = wt2d.cells().index(cells_to_divide[0])
-		wt2d.divide_cell( wt2d.cells()[ cell_to_divide_index ], divide_strategy )
+	for i in cells_to_divide:
+		wt2d.divide_cell( i, divide_strategy, pre_fun=pre_fun, post_fun=post_fun )
 		
 
-def chd_perimiter(wt2d, max_perimiter, divide_strategy):
+def chd_perimiter(wt2d, max_perimiter, divide_strategy, pre_fun=None, post_fun=None):
 	"""Dividing cells which has longer perimiter than max_perimiter"""
 	cells_to_divide = scs_perimiter_rule(wt2d, max_perimiter)
-	if cells_to_divide:
-		cell_to_divide_index = wt2d.cells().index(cells_to_divide[0])
-		wt2d.divide_cell( wt2d.cells()[ cell_to_divide_index ], divide_strategy )
+	for i in cells_to_divide:
+		wt2d.divide_cell( i, divide_strategy, pre_fun=pre_fun, post_fun=post_fun )
 		
 
 # Divide cell strategy functions
