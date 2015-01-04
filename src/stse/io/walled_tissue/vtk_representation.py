@@ -22,8 +22,8 @@ __date__="<Timestamp>"
 __version__="0.1"
 __docformat__= "restructuredtext en"
 
-from enthought.tvtk.api import tvtk
-from enthought.traits.trait_errors import TraitError
+from tvtk.api import tvtk
+from traits.trait_errors import TraitError
 from numpy import array, infty
 import math
 

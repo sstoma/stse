@@ -11,12 +11,12 @@ from openalea.stse.structures.algo.walled_tissue import avg_cell_property
     
 
 
-from enthought.pyface.api import GUI
+from pyface.api import GUI
 from vtk.util import colors
-from enthought.tvtk.api import tvtk
-from enthought.traits.api import  Instance, HasTraits, Range, \
+from tvtk.api import tvtk
+from traits.api import  Instance, HasTraits, Range, \
     on_trait_change, Color, HTML, Enum, Tuple, Int, Bool, Array, Float, Any, Str
-from enthought.traits.ui.api import View, Item, VGroup,  Tabbed, \
+from traitsui.api import View, Item, VGroup,  Tabbed, \
     HSplit, InstanceEditor
 from numpy import array
 import numpy as np

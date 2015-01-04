@@ -27,25 +27,25 @@ from pylab import inf
 
 from numpy import array, zeros, inf, infty
 
-from enthought.pyface.api import FileDialog, DirectoryDialog, GUI, OK, ImageResource
-from enthought.pyface.action.api import Action, MenuBarManager, MenuManager, ToolBarManager
+from pyface.api import FileDialog, DirectoryDialog, GUI, OK, ImageResource
+from pyface.action.api import Action, MenuBarManager, MenuManager, ToolBarManager
 
-from enthought.traits.api import  Instance, HasTraits, Range, on_trait_change, Color, HTML, \
+from traits.api import  Instance, HasTraits, Range, on_trait_change, Color, HTML, \
     Enum, Tuple, Int, Bool, Array, Float, Any, Str, Button
 
-from enthought.traits.trait_errors import TraitError
+from traits.trait_errors import TraitError
 
-from enthought.tvtk.pyface.scene_editor import SceneEditor
-from enthought.tvtk.api import tvtk
+from tvtk.pyface.scene_editor import SceneEditor
+from tvtk.api import tvtk
 
-from enthought.traits.ui.api import View, Item, VGroup, Tabbed, HSplit, InstanceEditor, HGroup
+from traitsui.api import View, Item, VGroup, Tabbed, HSplit, InstanceEditor, HGroup
 
-from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
-from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
-from enthought.mayavi import mlab
-from enthought.mayavi.sources.vtk_data_source import VTKDataSource
-from enthought.mayavi.modules.image_actor import ImageActor
-from enthought.persistence.file_path import FilePath
+from mayavi.tools.mlab_scene_model import MlabSceneModel
+from mayavi.core.ui.mayavi_scene import MayaviScene
+from mayavi import mlab
+from mayavi.sources.vtk_data_source import VTKDataSource
+from mayavi.modules.image_actor import ImageActor
+from twisted.python.filepath import FilePath #TODO check if needed
 
 from vtk.util import colors
 

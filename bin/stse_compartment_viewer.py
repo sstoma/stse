@@ -21,7 +21,7 @@ __docformat__= "restructuredtext en"
 # ---------------------------------------------------------------- IMPORTS
 
 # Enthought library imports.
-from enthought.pyface.api import GUI
+from pyface.api import GUI
 #STSE imports
 from openalea.stse.gui.compartment_viewer import general_viewing
 
